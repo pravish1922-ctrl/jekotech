@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#D91111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jekotech">
+<meta name="description" content="Jekotech Car Services Ltd — Nouvelle France, Mauritius">
+<title>Jekotech Car Services</title>
+<link rel="manifest" href="#" />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #D91111;
+  --red-dark: #A00000;
+  --red-glow: rgba(217,17,17,0.3);
+  --black: #0A0A0A;
+  --black2: #111111;
+  --black3: #1A1A1A;
+  --steel: #2A2A2A;
+  --silver: #888888;
+  --white: #F0EDE8;
+  --offwhite: #C8C4BE;
+  --green: #22C55E;
+  --amber: #F59E0B;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height:100%; overflow:hidden; }
+
+body {
+  font-family: 'Barlow', sans-serif;
+  background: var(--black);
+  color: var(--white);
+  user-select: none;
+}
+
+/* ========== APP SHELL ========== */
+#app { height: 100vh; display: flex; flex-direction: column; }
+
+/* Top bar */
+.topbar {
+  background: var(--black2);
+  border-bottom: 1px solid var(--steel);
+  padding: 14px 20px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.topbar-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  letter-spacing: 3px;
+  color: var(--white);
+}
+.topbar-logo span { color: var(--red); }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lang-toggle {
+  display: flex;
+  border: 1px solid var(--steel);
+  overflow: hidden;
+}
+.lang-btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  background: none;
+  border: none;
+  color: var(--silver);
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lang-btn.active { background: var(--red); color: var(--white); }
+
+.owner-btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  background: var(--steel);
+  border: none;
+  color: var(--offwhite);
+  padding: 6px 12px;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  transition: all 0.2s;
+}
+.owner-btn:hover, .owner-btn.active { background: var(--red); color: var(--white); }
+
+/* Scrollable content */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.content::-webkit-scrollbar { display: none; }
+
+/* Bottom nav */
+.bottom-nav {
+  background: var(--black2);
+  border-top: 1px solid var(--steel);
+  display: flex;
+  flex-shrink: 0;
+  padding-bottom: var(--safe-bottom);
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  border: none;
+  background: none;
+  color: var(--silver);
+}
+.nav-item.active { color: var(--red); }
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 20%; right: 20%;
+  height: 2px;
+  background: var(--red);
+}
+.nav-icon { font-size: 20px; margin-bottom: 3px; }
+.nav-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* ========== SCREENS ========== */
+.screen { display: none; padding: 0; animation: fadeIn 0.3s ease; }
+.screen.active { display: block; }
+
+@keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+
+/* ========== HOME SCREEN ========== */
+.hero-mobile {
+  background: linear-gradient(160deg, var(--black2) 0%, var(--black) 60%),
+    radial-gradient(ellipse 80% 60% at 80% 30%, rgba(140,0,0,0.2), transparent);
+  padding: 32px 20px 28px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-mobile::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 30px;
+  width: 3px; height: 100%;
+  background: linear-gradient(to bottom, var(--red), transparent);
+  opacity: 0.5;
+}
+
+.hero-tag {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 10px;
+}
+
+.hero-title-mobile {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 56px;
+  line-height: 0.9;
+  color: var(--white);
+  margin-bottom: 12px;
+}
+.hero-title-mobile span { color: var(--red); }
+
+.hero-sub-mobile {
+  font-size: 13px;
+  color: var(--silver);
+  line-height: 1.6;
+  margin-bottom: 24px;
+  max-width: 260px;
+}
+
+.hero-actions { display: flex; gap: 10px; }
+
+.btn-red {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: var(--red);
+  color: var(--white);
+  border: none;
+  padding: 13px 22px;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  transition: background 0.2s;
+}
+.btn-red:hover { background: var(--red-dark); }
+
+.btn-outline {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--offwhite);
+  border: 1px solid var(--steel);
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-outline:hover { border-color: var(--red); color: var(--red); }
+
+/* Stats strip */
+.stats-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--red);
+  text-align: center;
+}
+.stat-cell { padding: 14px 4px; border-right: 1px solid rgba(255,255,255,0.2); }
+.stat-cell:last-child { border: none; }
+.stat-n {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  color: var(--white);
+  line-height: 1;
+}
+.stat-l {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.75);
+  margin-top: 2px;
+}
+
+/* Section headers */
+.sec-head {
+  padding: 24px 20px 16px;
+}
+.sec-eyebrow {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 6px;
+}
+.sec-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 38px;
+  line-height: 0.9;
+  color: var(--white);
+}
+
+/* Quick services */
+.quick-services {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 0 0 4px;
+}
+.qs-card {
+  background: var(--black3);
+  padding: 20px 16px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-top: 2px solid transparent;
+}
+.qs-card:active { background: #222; }
+.qs-card.selected { border-top-color: var(--red); }
+.qs-icon { font-size: 26px; margin-bottom: 10px; display: block; }
+.qs-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--white);
+  line-height: 1.2;
+}
+.qs-num {
+  position: absolute;
+  top: 8px; right: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px;
+  color: rgba(217,17,17,0.1);
+}
+
+/* Opening hours card */
+.info-card {
+  margin: 4px 20px 20px;
+  background: var(--black3);
+  border: 1px solid var(--steel);
+  border-left: 3px solid var(--red);
+  padding: 18px;
+}
+.info-card-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 12px;
+}
+.hours-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--offwhite);
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.hours-row:last-child { border: none; }
+.hours-day { color: var(--silver); font-size: 12px; }
+
+/* ========== SERVICES SCREEN ========== */
+.service-list { padding: 4px 0 80px; }
+.service-item {
+  background: var(--black3);
+  margin: 2px 0;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-left: 3px solid transparent;
+}
+.service-item:active { background: #222; }
+.service-item.selected { border-left-color: var(--red); background: #1e1e1e; }
+.si-icon { font-size: 28px; width: 44px; text-align: center; flex-shrink: 0; }
+.si-info { flex: 1; }
+.si-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--white);
+}
+.si-name-fr { font-size: 11px; color: var(--red); font-style: italic; margin-top: 2px; }
+.si-desc { font-size: 12px; color: var(--silver); margin-top: 5px; line-height: 1.4; }
+.si-arrow { color: var(--steel); font-size: 18px; }
+.service-item.selected .si-arrow { color: var(--red); }
+
+.book-fab {
+  position: fixed;
+  bottom: calc(68px + var(--safe-bottom));
+  right: 20px;
+  background: var(--red);
+  color: var(--white);
+  border: none;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 14px 22px;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  cursor: pointer;
+  box-shadow: 0 4px 20px var(--red-glow);
+  z-index: 50;
+  transition: all 0.2s;
+}
+.book-fab:active { background: var(--red-dark); }
+
+/* ========== BOOKING SCREEN ========== */
+.booking-screen { padding-bottom: 80px; }
+
+.chat-header {
+  background: var(--black3);
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--steel);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.chat-avatar {
+  width: 40px; height: 40px;
+  background: var(--red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  flex-shrink: 0;
+}
+.chat-info-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--white);
+}
+.chat-status {
+  font-size: 11px;
+  color: var(--green);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+}
+.chat-status::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.chat-msgs {
+  height: calc(100vh - 280px);
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+.chat-msgs::-webkit-scrollbar { display: none; }
+
+.msg-wrap { display: flex; gap: 8px; animation: fadeIn 0.3s ease; }
+.msg-wrap.user { flex-direction: row-reverse; }
+
+.msg-av {
+  width: 30px; height: 30px;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: var(--red);
+  margin-top: 2px;
+}
+.msg-wrap.user .msg-av { background: var(--steel); }
+
+.msg-bub {
+  max-width: 78%;
+  padding: 11px 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--white);
+  background: var(--black3);
+  border-left: 2px solid var(--red);
+}
+.msg-wrap.user .msg-bub {
+  background: var(--steel);
+  border-left: none;
+  border-right: 2px solid var(--silver);
+}
+
+.typing-wrap { display: flex; gap: 8px; }
+.typing-bub {
+  padding: 11px 16px;
+  background: var(--black3);
+  border-left: 2px solid var(--red);
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.t-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--red);
+  animation: typeBounce 1.2s infinite;
+}
+.t-dot:nth-child(2) { animation-delay: 0.2s; }
+.t-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typeBounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+
+.quick-chips {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  overflow-x: auto;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  -webkit-overflow-scrolling: touch;
+}
+.quick-chips::-webkit-scrollbar { display: none; }
+.chip {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--steel);
+  color: var(--offwhite);
+  padding: 7px 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.chip:active { border-color: var(--red); color: var(--red); }
+
+.chat-input-bar {
+  border-top: 1px solid var(--steel);
+  display: flex;
+  background: var(--black2);
+}
+.chat-inp {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 14px 16px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  color: var(--white);
+}
+.chat-inp::placeholder { color: var(--silver); font-size: 13px; }
+.chat-send-btn {
+  background: var(--red);
+  border: none;
+  color: var(--white);
+  padding: 14px 20px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.chat-send-btn:active { background: var(--red-dark); }
+.chat-send-btn:disabled { opacity: 0.4; }
+
+/* ========== OWNER DASHBOARD ========== */
+.owner-screen { padding-bottom: 80px; }
+
+.owner-login {
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.owner-login-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 42px;
+  color: var(--white);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.owner-login-title span { color: var(--red); }
+.owner-login-sub { font-size: 13px; color: var(--silver); margin-bottom: 10px; }
+
+.inp-field {
+  background: var(--black3);
+  border: 1px solid var(--steel);
+  border-left: 3px solid var(--red);
+  padding: 14px 16px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  color: var(--white);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+.inp-field:focus { border-color: var(--red); }
+.inp-field::placeholder { color: var(--silver); }
+
+.inp-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--silver);
+  margin-bottom: 6px;
+}
+
+/* Dashboard */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 16px 0 4px;
+}
+.dash-card {
+  background: var(--black3);
+  padding: 20px 16px;
+  text-align: center;
+}
+.dash-n {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 44px;
+  line-height: 1;
+  color: var(--white);
+}
+.dash-n.red { color: var(--red); }
+.dash-n.green { color: var(--green); }
+.dash-n.amber { color: var(--amber); }
+.dash-lbl {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--silver);
+  margin-top: 4px;
+}
+
+.apt-list { padding: 0 0 20px; }
+.apt-item {
+  background: var(--black3);
+  margin: 2px 0;
+  padding: 16px 20px;
+  border-left: 3px solid var(--steel);
+  transition: all 0.2s;
+}
+.apt-item.pending { border-left-color: var(--amber); }
+.apt-item.confirmed { border-left-color: var(--green); }
+.apt-item.done { border-left-color: var(--silver); opacity: 0.6; }
+
+.apt-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.apt-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--white);
+}
+.apt-badge {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+}
+.apt-badge.pending { background: rgba(245,158,11,0.2); color: var(--amber); }
+.apt-badge.confirmed { background: rgba(34,197,94,0.2); color: var(--green); }
+.apt-badge.done { background: rgba(136,136,136,0.2); color: var(--silver); }
+
+.apt-service {
+  font-size: 12px;
+  color: var(--red);
+  margin-bottom: 4px;
+}
+.apt-meta {
+  font-size: 11px;
+  color: var(--silver);
+  display: flex;
+  gap: 16px;
+}
+
+.apt-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.apt-btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border: none;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.apt-btn.confirm { background: rgba(34,197,94,0.2); color: var(--green); }
+.apt-btn.confirm:active { background: var(--green); color: #000; }
+.apt-btn.done-btn { background: var(--steel); color: var(--silver); }
+.apt-btn.done-btn:active { background: #444; }
+.apt-btn.delete { background: rgba(217,17,17,0.15); color: var(--red); }
+.apt-btn.delete:active { background: var(--red); color: #fff; }
+
+/* Notification banner */
+.notif-banner {
+  background: var(--red);
+  padding: 12px 20px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--white);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: slideDown 0.4s ease;
+}
+@keyframes slideDown { from{transform:translateY(-100%)} to{transform:translateY(0)} }
+.notif-close { background: none; border: none; color: var(--white); font-size: 18px; cursor: pointer; }
+
+/* Install prompt */
+.install-banner {
+  background: var(--black3);
+  border-top: 2px solid var(--red);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: fixed;
+  bottom: calc(68px + var(--safe-bottom));
+  left: 0; right: 0;
+  z-index: 100;
+  animation: slideUp 0.4s ease;
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.install-icon { font-size: 28px; }
+.install-text { flex: 1; }
+.install-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--white);
+}
+.install-sub { font-size: 11px; color: var(--silver); margin-top: 2px; }
+.install-close { background: none; border: none; color: var(--silver); font-size: 20px; cursor: pointer; padding: 4px; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-logo">JEKO<span>TECH</span></div>
+    <div class="topbar-right">
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" onclick="setLang('fr')">FR</button>
+      </div>
+      <button class="owner-btn" id="ownerToggleBtn" onclick="toggleOwnerMode()">⚙️ OWNER</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content" id="mainContent">
+
+    <!-- HOME SCREEN -->
+    <div class="screen active" id="screen-home">
+      <div class="hero-mobile">
+        <p class="hero-tag" id="heroTag">Nouvelle France, Mauritius</p>
+        <h1 class="hero-title-mobile" id="heroTitle">DRIVEN<br>BY <span>PRECISION</span></h1>
+        <p class="hero-sub-mobile" id="heroSub">Professional automotive repair & engineering. Your vehicle deserves the best.</p>
+        <div class="hero-actions">
+          <button class="btn-red" onclick="goTab('booking')" id="heroCta">📅 BOOK NOW</button>
+          <button class="btn-outline" onclick="goTab('services')" id="heroSvc">SERVICES</button>
+        </div>
+      </div>
+
+      <div class="stats-strip">
+        <div class="stat-cell"><div class="stat-n">500+</div><div class="stat-l" id="st1">Clients</div></div>
+        <div class="stat-cell"><div class="stat-n">10+</div><div class="stat-l" id="st2">Years</div></div>
+        <div class="stat-cell"><div class="stat-n">6</div><div class="stat-l" id="st3">Services</div></div>
+        <div class="stat-cell"><div class="stat-n">100%</div><div class="stat-l" id="st4">Quality</div></div>
+      </div>
+
+      <div class="sec-head">
+        <p class="sec-eyebrow" id="homeSecEye">Quick Book</p>
+        <h2 class="sec-title" id="homeSecTitle">OUR SERVICES</h2>
+      </div>
+
+      <div class="quick-services">
+        <div class="qs-card" onclick="quickBook('Engine Repair')">
+          <span class="qs-num">01</span>
+          <span class="qs-icon">🔧</span>
+          <div class="qs-name" id="qs1">Engine Repair</div>
+        </div>
+        <div class="qs-card" onclick="quickBook('Electrical Systems')">
+          <span class="qs-num">02</span>
+          <span class="qs-icon">⚡</span>
+          <div class="qs-name" id="qs2">Electrical Systems</div>
+        </div>
+        <div class="qs-card" onclick="quickBook('Suspension & Brakes')">
+          <span class="qs-num">03</span>
+          <span class="qs-icon">🛞</span>
+          <div class="qs-name" id="qs3">Suspension & Brakes</div>
+        </div>
+        <div class="qs-card" onclick="quickBook('Air Conditioning')">
+          <span class="qs-num">04</span>
+          <span class="qs-icon">❄️</span>
+          <div class="qs-name" id="qs4">Air Conditioning</div>
+        </div>
+        <div class="qs-card" onclick="quickBook('Car Engineering')">
+          <span class="qs-num">05</span>
+          <span class="qs-icon">🔩</span>
+          <div class="qs-name" id="qs5">Car Engineering</div>
+        </div>
+        <div class="qs-card" onclick="quickBook('Full Inspection')">
+          <span class="qs-num">06</span>
+          <span class="qs-icon">🔍</span>
+          <div class="qs-name" id="qs6">Full Inspection</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <p class="info-card-title" id="hoursTitle">⏰ Opening Hours</p>
+        <div class="hours-row"><span class="hours-day" id="hd1">Mon – Fri</span><span>8:00 AM – 5:30 PM</span></div>
+        <div class="hours-row"><span class="hours-day" id="hd2">Saturday</span><span>8:00 AM – 1:00 PM</span></div>
+        <div class="hours-row"><span class="hours-day" id="hd3">Sunday</span><span id="hd3val">Closed</span></div>
+      </div>
+    </div>
+
+    <!-- SERVICES SCREEN -->
+    <div class="screen" id="screen-services">
+      <div class="sec-head">
+        <p class="sec-eyebrow" id="svcEye">What We Do</p>
+        <h2 class="sec-title" id="svcTitle">SERVICES</h2>
+      </div>
+      <div class="service-list" id="serviceList">
+        <!-- Filled by JS -->
+      </div>
+      <button class="book-fab" id="bookFab" onclick="goTab('booking')" style="display:none">📅 BOOK SERVICE</button>
+    </div>
+
+    <!-- BOOKING / CHAT SCREEN -->
+    <div class="screen" id="screen-booking">
+      <div class="chat-header">
+        <div class="chat-avatar">🔧</div>
+        <div>
+          <div class="chat-info-name">Jekotech Assistant</div>
+          <div class="chat-status" id="chatStatus">Online</div>
+        </div>
+      </div>
+      <div class="chat-msgs" id="chatMsgs"></div>
+      <div class="quick-chips" id="quickChips">
+        <button class="chip" onclick="sendChip('Engine Repair')">🔧 Engine</button>
+        <button class="chip" onclick="sendChip('Brakes')">🛞 Brakes</button>
+        <button class="chip" onclick="sendChip('Air Conditioning')">❄️ AC</button>
+        <button class="chip" onclick="sendChip('Inspection')">🔍 Inspection</button>
+        <button class="chip" onclick="sendChip('Electrical')">⚡ Electrical</button>
+        <button class="chip" onclick="sendChip('Engineering')">🔩 Engineering</button>
+      </div>
+      <div class="chat-input-bar">
+        <input class="chat-inp" id="chatInp" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMsg()" />
+        <button class="chat-send-btn" id="sendBtn" onclick="sendMsg()">➤</button>
+      </div>
+    </div>
+
+    <!-- OWNER SCREEN -->
+    <div class="screen" id="screen-owner">
+      <!-- Login or Dashboard injected by JS -->
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" onclick="goTab('home')" id="nav-home">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label" id="navHome">Home</span>
+    </button>
+    <button class="nav-item" onclick="goTab('services')" id="nav-services">
+      <span class="nav-icon">🔧</span>
+      <span class="nav-label" id="navSvc">Services</span>
+    </button>
+    <button class="nav-item" onclick="goTab('booking')" id="nav-booking">
+      <span class="nav-icon">📅</span>
+      <span class="nav-label" id="navBook">Book</span>
+    </button>
+    <button class="nav-item" onclick="goTab('owner')" id="nav-owner">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label" id="navOwner">Owner</span>
+    </button>
+  </div>
+</div>
+
+<!-- Install Banner -->
+<div class="install-banner" id="installBanner" style="display:none">
+  <div class="install-icon">📱</div>
+  <div class="install-text">
+    <div class="install-title" id="installTitle">Install Jekotech App</div>
+    <div class="install-sub" id="installSub">Add to Home Screen for quick access</div>
+  </div>
+  <button class="install-close" onclick="document.getElementById('installBanner').style.display='none'">✕</button>
+</div>
+
+<script>
+// ============================================================
+// LANGUAGE
+// ============================================================
+let lang = 'en';
+const T = {
+  en: {
+    heroTag: 'Nouvelle France, Mauritius — Automotive Experts',
+    heroTitle: 'DRIVEN<br>BY <span>PRECISION</span>',
+    heroSub: 'Professional automotive repair & engineering. Your vehicle deserves the best.',
+    heroCta: '📅 BOOK NOW', heroSvc: 'SERVICES',
+    st1:'Clients', st2:'Years', st3:'Services', st4:'Quality',
+    homeSecEye:'Quick Book', homeSecTitle:'OUR SERVICES',
+    qs1:'Engine Repair', qs2:'Electrical Systems', qs3:'Suspension & Brakes',
+    qs4:'Air Conditioning', qs5:'Car Engineering', qs6:'Full Inspection',
+    hoursTitle:'⏰ Opening Hours', hd1:'Mon – Fri', hd2:'Saturday', hd3:'Sunday', hd3val:'Closed',
+    svcEye:'What We Do', svcTitle:'SERVICES',
+    navHome:'Home', navSvc:'Services', navBook:'Book', navOwner:'Owner',
+    chatStatus:'Online · Replies instantly',
+    installTitle:'Install Jekotech App', installSub:'Add to Home Screen for quick access',
+    ownerTitle:'OWNER<br><span>DASHBOARD</span>', ownerSub:'Sign in to manage appointments',
+    pinLabel:'Owner PIN', pinBtn:'SIGN IN', pinErr:'Incorrect PIN. Try 1234',
+    dashTitle:'DASHBOARD', todayApts:'Today\'s Appointments', allApts:'All Appointments',
+    pending:'Pending', confirmed:'Confirmed', done:'Done',
+    confirmBtn:'Confirm', doneBtn:'Done', deleteBtn:'Delete',
+    noApts:'No appointments yet. Customers can book via the app.',
+  },
+  fr: {
+    heroTag: 'Nouvelle France, Maurice — Experts Automobile',
+    heroTitle: 'GUIDÉS<br>PAR LA <span>PRÉCISION</span>',
+    heroSub: 'Réparation automobile professionnelle. Votre véhicule mérite le meilleur.',
+    heroCta: '📅 RÉSERVER', heroSvc: 'SERVICES',
+    st1:'Clients', st2:'Années', st3:'Services', st4:'Qualité',
+    homeSecEye:'Réservation Rapide', homeSecTitle:'NOS SERVICES',
+    qs1:'Réparation Moteur', qs2:'Systèmes Électriques', qs3:'Suspension & Freins',
+    qs4:'Climatisation', qs5:'Ingénierie Auto', qs6:'Inspection Complète',
+    hoursTitle:'⏰ Heures d\'Ouverture', hd1:'Lun – Ven', hd2:'Samedi', hd3:'Dimanche', hd3val:'Fermé',
+    svcEye:'Ce Que Nous Faisons', svcTitle:'SERVICES',
+    navHome:'Accueil', navSvc:'Services', navBook:'Réserver', navOwner:'Patron',
+    chatStatus:'En ligne · Répond instantanément',
+    installTitle:'Installer l\'App Jekotech', installSub:'Ajouter à l\'écran d\'accueil',
+    ownerTitle:'TABLEAU DE<br><span>BORD</span>', ownerSub:'Connectez-vous pour gérer les rendez-vous',
+    pinLabel:'Code PIN Patron', pinBtn:'SE CONNECTER', pinErr:'PIN incorrect. Essayez 1234',
+    dashTitle:'TABLEAU DE BORD', todayApts:'Rendez-vous Aujourd\'hui', allApts:'Tous les Rendez-vous',
+    pending:'En attente', confirmed:'Confirmé', done:'Terminé',
+    confirmBtn:'Confirmer', doneBtn:'Terminé', deleteBtn:'Supprimer',
+    noApts:'Pas encore de rendez-vous. Les clients peuvent réserver via l\'app.',
+  }
+};
+
+function t(key) { return T[lang][key] || key; }
+
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.lang-btn[onclick="setLang('${l}')"]`).classList.add('active');
+  applyLang();
+  updateBookingStatus();
+}
+
+function applyLang() {
+  const keys = ['heroTag','heroTitle','heroSub','heroCta','heroSvc','st1','st2','st3','st4',
+    'homeSecEye','homeSecTitle','qs1','qs2','qs3','qs4','qs5','qs6',
+    'hoursTitle','hd1','hd2','hd3','hd3val','svcEye','svcTitle',
+    'navHome','navSvc','navBook','navOwner','installTitle','installSub'];
+  keys.forEach(k => {
+    const el = document.getElementById(k);
+    if (el) el.innerHTML = t(k);
+  });
+  buildServiceList();
+  if (ownerLoggedIn) renderDashboard();
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+let currentTab = 'home';
+let ownerMode = false;
+let ownerLoggedIn = false;
+
+function goTab(tab) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+  currentTab = tab;
+  document.getElementById('mainContent').scrollTop = 0;
+
+  if (tab === 'services') {
+    buildServiceList();
+  }
+  if (tab === 'owner') {
+    renderOwnerScreen();
+  }
+}
+
+function toggleOwnerMode() {
+  goTab('owner');
+}
+
+// ============================================================
+// SERVICES
+// ============================================================
+const SERVICES = [
+  { icon:'🔧', en:'Engine Repair', fr:'Réparation Moteur', descEn:'Full diagnostic and repair of all engine types. From oil changes to complete overhauls.', descFr:'Diagnostic complet et réparation de tous types de moteurs. Des vidanges aux révisions complètes.' },
+  { icon:'⚡', en:'Electrical Systems', fr:'Systèmes Électriques', descEn:'Complete auto electrical diagnostics, wiring repair, battery and alternator services.', descFr:'Diagnostic électrique complet, réparation du câblage, batterie et alternateur.' },
+  { icon:'🛞', en:'Suspension & Brakes', fr:'Suspension & Freins', descEn:'Wheel alignment, shock absorbers, brake pads and disc replacement.', descFr:'Géométrie, amortisseurs, plaquettes de frein et remplacement de disques.' },
+  { icon:'❄️', en:'Air Conditioning', fr:'Climatisation', descEn:'AC recharging, compressor replacement and full air conditioning system service.', descFr:'Recharge de climatisation, remplacement du compresseur et entretien complet.' },
+  { icon:'🔩', en:'Car Engineering', fr:'Ingénierie Auto', descEn:'Custom engineering solutions and performance tuning for all vehicle types.', descFr:'Solutions d\'ingénierie sur mesure et optimisation des performances.' },
+  { icon:'🔍', en:'Full Inspection', fr:'Inspection Complète', descEn:'Pre-purchase checks and full vehicle health reports. Know what you\'re driving.', descFr:'Contrôle avant achat et rapports complets sur l\'état de votre véhicule.' },
+];
+
+let selectedService = null;
+
+function buildServiceList() {
+  const list = document.getElementById('serviceList');
+  list.innerHTML = SERVICES.map((s, i) => `
+    <div class="service-item ${selectedService === i ? 'selected' : ''}" onclick="selectService(${i})">
+      <div class="si-icon">${s.icon}</div>
+      <div class="si-info">
+        <div class="si-name">${lang === 'fr' ? s.fr : s.en}</div>
+        <div class="si-name-fr">${lang === 'fr' ? s.en : s.fr}</div>
+        <div class="si-desc">${lang === 'fr' ? s.descFr : s.descEn}</div>
+      </div>
+      <div class="si-arrow">›</div>
+    </div>
+  `).join('');
+}
+
+function selectService(i) {
+  selectedService = i;
+  buildServiceList();
+  const fab = document.getElementById('bookFab');
+  fab.style.display = 'block';
+  fab.textContent = `📅 ${lang === 'fr' ? 'RÉSERVER — ' + SERVICES[i].fr : 'BOOK — ' + SERVICES[i].en}`;
+}
+
+function quickBook(service) {
+  goTab('booking');
+  setTimeout(() => {
+    document.getElementById('chatInp').value = service;
+    sendMsg();
+  }, 400);
+}
+
+// ============================================================
+// AI CHAT BOOKING
+// ============================================================
+const SYSTEM = `You are the friendly AI booking assistant for Jekotech Car Services Ltd, an automotive repair and engineering garage located in Nouvelle France, Mauritius. You help customers book appointments via a mobile app.
+
+Services: Engine Repair, Electrical Systems, Suspension & Brakes, Air Conditioning, Car Engineering, Full Inspection.
+Hours: Mon-Fri 8AM-5:30PM, Saturday 8AM-1PM, Sunday closed.
+
+Booking flow:
+1. Greet warmly & ask which service they need
+2. Ask preferred date & time (within business hours)
+3. Ask their name and phone number
+4. Confirm all details and say the garage will call to confirm
+
+Rules:
+- Keep replies SHORT (2-3 sentences max) — this is a mobile chat
+- Match the customer's language (English or French)
+- Be warm, professional, efficient
+- If urgent: advise to message Facebook page "Jekotech Car Services Ltd"
+- You are an AI; for complex questions, direct to the Facebook page`;
+
+let chatHistory = [];
+let chatReady = false;
+
+function initChat() {
+  chatHistory = [];
+  const msgs = document.getElementById('chatMsgs');
+  msgs.innerHTML = '';
+  const welcome = lang === 'fr'
+    ? '👋 Bonjour ! Je suis l\'assistant Jekotech. Quel service souhaitez-vous réserver aujourd\'hui ?'
+    : '👋 Hello! I\'m the Jekotech assistant. Which service would you like to book today?';
+  addBotMsg(welcome);
+  chatHistory.push({ role: 'assistant', content: welcome });
+  chatReady = true;
+}
+
+function addBotMsg(text) {
+  const c = document.getElementById('chatMsgs');
+  const d = document.createElement('div');
+  d.className = 'msg-wrap';
+  d.innerHTML = `<div class="msg-av">🔧</div><div class="msg-bub">${text.replace(/\n/g,'<br>')}</div>`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+function addUserMsg(text) {
+  const c = document.getElementById('chatMsgs');
+  const d = document.createElement('div');
+  d.className = 'msg-wrap user';
+  d.innerHTML = `<div class="msg-av">👤</div><div class="msg-bub">${text}</div>`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+function showTyping() {
+  const c = document.getElementById('chatMsgs');
+  const d = document.createElement('div');
+  d.className = 'typing-wrap';
+  d.id = 'typingEl';
+  d.innerHTML = `<div class="msg-av">🔧</div><div class="typing-bub"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typingEl');
+  if (el) el.remove();
+}
+
+function updateBookingStatus() {
+  const el = document.getElementById('chatStatus');
+  if (el) el.textContent = t('chatStatus');
+}
+
+async function sendMsg() {
+  if (!chatReady) return;
+  const inp = document.getElementById('chatInp');
+  const btn = document.getElementById('sendBtn');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  btn.disabled = true;
+  addUserMsg(text);
+  chatHistory.push({ role: 'user', content: text });
+
+  // Save booking request to appointments (simple keyword detection)
+  extractBooking(text);
+
+  showTyping();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM,
+        messages: chatHistory
+      })
+    });
+    const data = await res.json();
+    removeTyping();
+    const reply = data.content?.[0]?.text || (lang === 'fr' ? 'Désolé, erreur. Réessayez.' : 'Sorry, error. Please try again.');
+    addBotMsg(reply);
+    chatHistory.push({ role: 'assistant', content: reply });
+
+    // Check if booking is complete (name + phone detected)
+    checkBookingComplete(reply);
+  } catch(e) {
+    removeTyping();
+    addBotMsg(lang === 'fr' ? 'Problème de connexion. Contactez-nous sur Facebook.' : 'Connection issue. Please contact us on Facebook.');
+  }
+  btn.disabled = false;
+}
+
+function sendChip(text) {
+  document.getElementById('chatInp').value = text;
+  sendMsg();
+}
+
+// Simple booking extraction
+let pendingBooking = {};
+function extractBooking(text) {
+  const services = ['engine','moteur','electrical','électrique','brakes','freins','suspension','air conditioning','climatisation','engineering','ingénierie','inspection'];
+  services.forEach(s => {
+    if (text.toLowerCase().includes(s)) {
+      pendingBooking.service = text;
+    }
+  });
+  // Phone number pattern
+  const phone = text.match(/\+?[\d\s\-]{7,}/);
+  if (phone) pendingBooking.phone = phone[0].trim();
+}
+
+function checkBookingComplete(reply) {
+  const confirmWords = ['confirm','confirmé','appointment','rendez-vous booked','réservé'];
+  if (confirmWords.some(w => reply.toLowerCase().includes(w)) && pendingBooking.phone) {
+    // Save appointment
+    const apt = {
+      id: Date.now(),
+      name: 'App Customer',
+      service: pendingBooking.service || 'General Service',
+      phone: pendingBooking.phone || 'N/A',
+      date: new Date().toLocaleDateString(),
+      time: 'TBC',
+      status: 'pending'
+    };
+    appointments.unshift(apt);
+    saveAppointments();
+    pendingBooking = {};
+  }
+}
+
+// ============================================================
+// OWNER DASHBOARD
+// ============================================================
+const OWNER_PIN = '1234';
+let appointments = JSON.parse(localStorage.getItem('jeko_apts') || '[]');
+
+// Demo data if empty
+if (appointments.length === 0) {
+  appointments = [
+    { id: 1, name: 'Raj Patel', service: 'Engine Repair', phone: '+230 5712 3456', date: new Date().toLocaleDateString(), time: '9:00 AM', status: 'pending' },
+    { id: 2, name: 'Marie Dupont', service: 'Climatisation / AC', phone: '+230 5834 7890', date: new Date().toLocaleDateString(), time: '11:30 AM', status: 'confirmed' },
+    { id: 3, name: 'Kevin Lee', service: 'Full Inspection', phone: '+230 5923 1122', date: new Date().toLocaleDateString(), time: '2:00 PM', status: 'done' },
+    { id: 4, name: 'Priya Nair', service: 'Suspension & Brakes', phone: '+230 5645 3344', date: 'Tomorrow', time: '10:00 AM', status: 'pending' },
+  ];
+  saveAppointments();
+}
+
+function saveAppointments() {
+  localStorage.setItem('jeko_apts', JSON.stringify(appointments));
+}
+
+function renderOwnerScreen() {
+  const screen = document.getElementById('screen-owner');
+  if (!ownerLoggedIn) {
+    screen.innerHTML = `
+      <div class="owner-login">
+        <h2 class="owner-login-title">${t('ownerTitle')}</h2>
+        <p class="owner-login-sub">${t('ownerSub')}</p>
+        <div>
+          <p class="inp-label">${t('pinLabel')}</p>
+          <input class="inp-field" type="password" id="pinInput" placeholder="••••" maxlength="4"
+            onkeydown="if(event.key==='Enter')checkPin()" inputmode="numeric" />
+        </div>
+        <button class="btn-red" onclick="checkPin()" style="width:100%;justify-content:center">${t('pinBtn')}</button>
+        <p id="pinErr" style="color:var(--red);font-size:12px;display:none">${t('pinErr')}</p>
+      </div>
+    `;
+  } else {
+    renderDashboard();
+  }
+}
+
+function checkPin() {
+  const pin = document.getElementById('pinInput')?.value;
+  if (pin === OWNER_PIN) {
+    ownerLoggedIn = true;
+    renderDashboard();
+  } else {
+    document.getElementById('pinErr').style.display = 'block';
+  }
+}
+
+function renderDashboard() {
+  const screen = document.getElementById('screen-owner');
+  const pending = appointments.filter(a => a.status === 'pending').length;
+  const confirmed = appointments.filter(a => a.status === 'confirmed').length;
+  const done = appointments.filter(a => a.status === 'done').length;
+  const today = appointments.filter(a => a.date === new Date().toLocaleDateString()).length;
+
+  screen.innerHTML = `
+    <div class="sec-head" style="display:flex;justify-content:space-between;align-items:flex-end">
+      <div>
+        <p class="sec-eyebrow">Owner Panel</p>
+        <h2 class="sec-title">${t('dashTitle')}</h2>
+      </div>
+      <button class="btn-outline" onclick="ownerLoggedIn=false;renderOwnerScreen()" style="font-size:10px;padding:8px 14px">LOGOUT</button>
+    </div>
+
+    <div class="dash-grid">
+      <div class="dash-card">
+        <div class="dash-n amber">${pending}</div>
+        <div class="dash-lbl">${t('pending')}</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-n green">${confirmed}</div>
+        <div class="dash-lbl">${t('confirmed')}</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-n">${done}</div>
+        <div class="dash-lbl">${t('done')}</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-n red">${today}</div>
+        <div class="dash-lbl">Today / Aujourd'hui</div>
+      </div>
+    </div>
+
+    <div class="sec-head" style="padding-bottom:8px">
+      <p class="sec-eyebrow">${t('allApts')}</p>
+    </div>
+
+    <div class="apt-list">
+      ${appointments.length === 0 ? `<p style="color:var(--silver);font-size:13px;padding:20px">${t('noApts')}</p>` :
+        appointments.map(a => `
+          <div class="apt-item ${a.status}" id="apt-${a.id}">
+            <div class="apt-top">
+              <div class="apt-name">👤 ${a.name}</div>
+              <div class="apt-badge ${a.status}">${t(a.status)}</div>
+            </div>
+            <div class="apt-service">🔧 ${a.service}</div>
+            <div class="apt-meta">
+              <span>📅 ${a.date}</span>
+              <span>🕐 ${a.time}</span>
+              <span>📞 ${a.phone}</span>
+            </div>
+            <div class="apt-actions">
+              ${a.status === 'pending' ? `<button class="apt-btn confirm" onclick="updateApt(${a.id},'confirmed')">${t('confirmBtn')}</button>` : ''}
+              ${a.status === 'confirmed' ? `<button class="apt-btn done-btn" onclick="updateApt(${a.id},'done')">${t('doneBtn')}</button>` : ''}
+              <button class="apt-btn delete" onclick="deleteApt(${a.id})">${t('deleteBtn')}</button>
+            </div>
+          </div>
+        `).join('')
+      }
+    </div>
+  `;
+}
+
+function updateApt(id, status) {
+  const apt = appointments.find(a => a.id === id);
+  if (apt) { apt.status = status; saveAppointments(); renderDashboard(); }
+}
+
+function deleteApt(id) {
+  appointments = appointments.filter(a => a.id !== id);
+  saveAppointments();
+  renderDashboard();
+}
+
+// ============================================================
+// PWA INSTALL PROMPT
+// ============================================================
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const banner = document.getElementById('installBanner');
+  banner.style.display = 'flex';
+  banner.querySelector('button').onclick = () => { banner.style.display = 'none'; };
+  banner.insertAdjacentHTML('beforeend', `
+    <button class="btn-red" style="font-size:9px;padding:10px 14px;white-space:nowrap" onclick="installApp()">INSTALL</button>
+  `);
+});
+
+async function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    document.getElementById('installBanner').style.display = 'none';
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load', () => {
+  buildServiceList();
+  initChat();
+  applyLang();
+
+  // Show install hint on mobile after 3s
+  setTimeout(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    if (!isStandalone && /iPhone|iPad|Android/i.test(navigator.userAgent)) {
+      document.getElementById('installBanner').style.display = 'flex';
+    }
+  }, 3000);
+});
+</script>
+</body>
+</html>

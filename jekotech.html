@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jekotech Car Services Ltd — Nouvelle France, Mauritius</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #D91111;
+    --red-dark: #A00000;
+    --red-glow: rgba(217,17,17,0.35);
+    --black: #0A0A0A;
+    --black2: #111111;
+    --black3: #1A1A1A;
+    --steel: #2A2A2A;
+    --silver: #9A9A9A;
+    --white: #F0EDE8;
+    --offwhite: #C8C4BE;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Barlow', sans-serif;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ---- NOISE OVERLAY ---- */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.5;
+  }
+
+  /* ---- NAV ---- */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 999;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 48px;
+    background: linear-gradient(to bottom, rgba(10,10,10,0.98), transparent);
+    backdrop-filter: blur(4px);
+  }
+
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--white);
+    text-decoration: none;
+  }
+
+  .nav-logo span { color: var(--red); }
+
+  .nav-links {
+    display: flex;
+    gap: 36px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--offwhite);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--red); }
+
+  .lang-toggle {
+    display: flex;
+    gap: 8px;
+  }
+
+  .lang-btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    background: none;
+    border: 1px solid var(--steel);
+    color: var(--silver);
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .lang-btn.active, .lang-btn:hover {
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  /* ---- HERO ---- */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 48px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 70% 40%, rgba(140,0,0,0.18) 0%, transparent 70%),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 80px,
+        rgba(255,255,255,0.012) 80px,
+        rgba(255,255,255,0.012) 81px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 80px,
+        rgba(255,255,255,0.012) 80px,
+        rgba(255,255,255,0.012) 81px
+      );
+  }
+
+  .hero-bg::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 300px;
+    background: linear-gradient(transparent, var(--black));
+  }
+
+  /* Diagonal red accent */
+  .hero-accent {
+    position: absolute;
+    top: 0; right: 100px;
+    width: 4px;
+    height: 100vh;
+    background: linear-gradient(to bottom, var(--red), transparent);
+    transform: skewX(-8deg);
+    opacity: 0.6;
+  }
+
+  .hero-accent2 {
+    position: absolute;
+    top: 0; right: 130px;
+    width: 1px;
+    height: 60vh;
+    background: linear-gradient(to bottom, transparent, var(--red-dark), transparent);
+    transform: skewX(-8deg);
+    opacity: 0.4;
+  }
+
+  .hero-eyebrow {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 20px;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(72px, 12vw, 180px);
+    line-height: 0.88;
+    color: var(--white);
+    animation: fadeUp 0.8s ease 0.1s both;
+  }
+
+  .hero-title .red { color: var(--red); }
+
+  .hero-sub {
+    font-family: 'Barlow', sans-serif;
+    font-size: 17px;
+    font-weight: 300;
+    color: var(--silver);
+    margin-top: 28px;
+    max-width: 480px;
+    line-height: 1.6;
+    animation: fadeUp 0.8s ease 0.2s both;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 16px;
+    margin-top: 40px;
+    animation: fadeUp 0.8s ease 0.3s both;
+  }
+
+  .btn-primary {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    background: var(--red);
+    color: var(--white);
+    border: none;
+    padding: 16px 36px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+    position: relative;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  }
+
+  .btn-primary:hover {
+    background: var(--red-dark);
+    box-shadow: 0 0 30px var(--red-glow);
+  }
+
+  .btn-secondary {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    background: transparent;
+    color: var(--white);
+    border: 1px solid var(--steel);
+    padding: 16px 36px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover { border-color: var(--red); color: var(--red); }
+
+  .scroll-indicator {
+    position: absolute;
+    bottom: 30px; right: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    animation: fadeUp 1s ease 0.5s both;
+  }
+
+  .scroll-line {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, var(--red), transparent);
+    animation: scrollPulse 1.8s ease infinite;
+  }
+
+  .scroll-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--silver);
+    writing-mode: vertical-rl;
+    text-transform: uppercase;
+  }
+
+  /* ---- STATS BAR ---- */
+  .stats-bar {
+    background: var(--red);
+    padding: 24px 48px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px));
+  }
+
+  .stat-item {
+    text-align: center;
+    border-right: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 0;
+  }
+
+  .stat-item:last-child { border-right: none; }
+
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    line-height: 1;
+    color: var(--white);
+  }
+
+  .stat-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.75);
+    margin-top: 4px;
+  }
+
+  /* ---- SECTIONS ---- */
+  section { padding: 100px 48px; }
+
+  .section-eyebrow {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 6vw, 86px);
+    line-height: 0.92;
+    color: var(--white);
+    margin-bottom: 40px;
+  }
+
+  /* ---- SERVICES ---- */
+  #services { background: var(--black2); }
+
+  .services-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 60px;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+
+  .service-card {
+    background: var(--black3);
+    padding: 40px 36px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s;
+    border-bottom: 3px solid transparent;
+  }
+
+  .service-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--red);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+
+  .service-card:hover::before { transform: scaleX(1); }
+  .service-card:hover { background: #1E1E1E; }
+
+  .service-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px;
+    color: rgba(217,17,17,0.12);
+    line-height: 1;
+    position: absolute;
+    top: 20px; right: 24px;
+  }
+
+  .service-icon {
+    font-size: 32px;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  .service-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 10px;
+  }
+
+  .service-name-fr {
+    font-family: 'Barlow', sans-serif;
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--red);
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+
+  .service-desc {
+    font-size: 14px;
+    color: var(--silver);
+    line-height: 1.6;
+  }
+
+  /* ---- ABOUT ---- */
+  #about {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .about-visual {
+    position: relative;
+  }
+
+  .about-visual-box {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: var(--black3);
+    border: 1px solid var(--steel);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .about-visual-box::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--red-glow) 0%, transparent 60%);
+  }
+
+  .about-badge {
+    position: absolute;
+    bottom: -20px; right: -20px;
+    width: 120px; height: 120px;
+    background: var(--red);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+
+  .about-badge-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    line-height: 1;
+    color: var(--white);
+  }
+
+  .about-badge-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.8);
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .about-text p {
+    font-size: 16px;
+    color: var(--offwhite);
+    line-height: 1.8;
+    margin-bottom: 20px;
+  }
+
+  .about-text p span { color: var(--red); font-weight: 500; }
+
+  .location-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: var(--silver);
+    text-transform: uppercase;
+    border: 1px solid var(--steel);
+    padding: 8px 16px;
+    margin-top: 20px;
+  }
+
+  /* ---- BOOKING ---- */
+  #booking {
+    background: var(--black2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #booking::before {
+    content: 'BOOK';
+    position: absolute;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 280px;
+    color: rgba(217,17,17,0.04);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    letter-spacing: 20px;
+  }
+
+  .booking-container {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .booking-header { text-align: center; margin-bottom: 50px; }
+
+  /* Chat window */
+  .chat-window {
+    background: var(--black);
+    border: 1px solid var(--steel);
+    border-top: 3px solid var(--red);
+    position: relative;
+  }
+
+  .chat-topbar {
+    background: var(--black3);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--steel);
+  }
+
+  .chat-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: pulse 2s infinite;
+  }
+
+  .chat-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+
+  .chat-subtitle {
+    font-size: 11px;
+    color: var(--silver);
+    margin-left: auto;
+  }
+
+  .chat-messages {
+    height: 380px;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-behavior: smooth;
+  }
+
+  .chat-messages::-webkit-scrollbar { width: 3px; }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--red); }
+
+  .msg {
+    display: flex;
+    gap: 12px;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .msg.user { flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 36px; height: 36px;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    background: var(--red);
+  }
+
+  .msg.user .msg-avatar {
+    background: var(--steel);
+  }
+
+  .msg-bubble {
+    max-width: 70%;
+    padding: 14px 18px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--white);
+    background: var(--black3);
+    border-left: 2px solid var(--red);
+  }
+
+  .msg.user .msg-bubble {
+    background: var(--steel);
+    border-left: none;
+    border-right: 2px solid var(--silver);
+  }
+
+  .typing-indicator {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    padding: 14px 18px;
+    background: var(--black3);
+    border-left: 2px solid var(--red);
+    width: fit-content;
+  }
+
+  .typing-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: typingBounce 1.2s infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  .chat-input-area {
+    border-top: 1px solid var(--steel);
+    display: flex;
+    gap: 0;
+  }
+
+  .chat-input {
+    flex: 1;
+    background: var(--black3);
+    border: none;
+    outline: none;
+    padding: 18px 24px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    color: var(--white);
+  }
+
+  .chat-input::placeholder { color: var(--silver); }
+
+  .chat-send {
+    background: var(--red);
+    border: none;
+    color: var(--white);
+    padding: 18px 28px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .chat-send:hover { background: var(--red-dark); }
+  .chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px 24px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .quick-reply {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    background: transparent;
+    border: 1px solid var(--steel);
+    color: var(--offwhite);
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .quick-reply:hover {
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  /* ---- CONTACT ---- */
+  #contact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: start;
+  }
+
+  .contact-info-block {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .contact-item {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .contact-icon {
+    width: 44px; height: 44px;
+    background: var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  }
+
+  .contact-detail-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 6px;
+  }
+
+  .contact-detail-val {
+    font-size: 16px;
+    color: var(--white);
+  }
+
+  .contact-detail-val-fr {
+    font-size: 13px;
+    color: var(--silver);
+    font-style: italic;
+    margin-top: 2px;
+  }
+
+  .social-links {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .social-link {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--silver);
+    text-decoration: none;
+    border: 1px solid var(--steel);
+    padding: 10px 18px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .social-link:hover { border-color: var(--red); color: var(--red); }
+
+  /* Map placeholder */
+  .map-placeholder {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: var(--black3);
+    border: 1px solid var(--steel);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .map-placeholder::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 20px,
+      rgba(217,17,17,0.03) 20px,
+      rgba(217,17,17,0.03) 21px
+    );
+  }
+
+  .map-pin { font-size: 48px; }
+
+  .map-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--silver);
+    text-align: center;
+  }
+
+  .map-address {
+    font-size: 13px;
+    color: var(--red);
+    font-style: italic;
+    text-align: center;
+  }
+
+  /* ---- FOOTER ---- */
+  footer {
+    background: var(--black);
+    border-top: 1px solid var(--steel);
+    padding: 40px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--white);
+  }
+
+  .footer-logo span { color: var(--red); }
+
+  .footer-copy {
+    font-size: 12px;
+    color: var(--silver);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1.5px;
+  }
+
+  .footer-tagline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--steel);
+  }
+
+  /* ---- ANIMATIONS ---- */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes scrollPulse {
+    0%, 100% { transform: scaleY(1); opacity: 1; }
+    50% { transform: scaleY(0.6); opacity: 0.4; }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  @keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-5px); }
+  }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 900px) {
+    nav { padding: 16px 20px; }
+    .nav-links { display: none; }
+    .hero, section { padding-left: 20px; padding-right: 20px; }
+    .stats-bar { grid-template-columns: repeat(2, 1fr); padding: 20px; }
+    .services-grid { grid-template-columns: 1fr; }
+    #about, #contact { grid-template-columns: 1fr; gap: 40px; }
+    .services-header { flex-direction: column; align-items: flex-start; gap: 20px; }
+    footer { flex-direction: column; gap: 16px; text-align: center; }
+  }
+
+  /* Bilingual hidden states */
+  [data-lang] { transition: opacity 0.3s; }
+  .fr { display: none; }
+  body.lang-fr .en { display: none; }
+  body.lang-fr .fr { display: block; }
+  span.fr { display: none; }
+  body.lang-fr span.en { display: none; }
+  body.lang-fr span.fr { display: inline; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">JEKO<span>TECH</span></a>
+  <ul class="nav-links">
+    <li><a href="#services"><span class="en">Services</span><span class="fr">Services</span></a></li>
+    <li><a href="#about"><span class="en">About</span><span class="fr">À propos</span></a></li>
+    <li><a href="#booking"><span class="en">Book Now</span><span class="fr">Réserver</span></a></li>
+    <li><a href="#contact"><span class="en">Contact</span><span class="fr">Contact</span></a></li>
+  </ul>
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('fr')">FR</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-accent"></div>
+  <div class="hero-accent2"></div>
+
+  <p class="hero-eyebrow">
+    <span class="en">Nouvelle France, Mauritius — Automotive Experts</span>
+    <span class="fr">Nouvelle France, Maurice — Experts Automobile</span>
+  </p>
+
+  <h1 class="hero-title">
+    <span class="en">DRIVEN<br>BY <span class="red">PRECISION</span></span>
+    <span class="fr">GUIDÉS<br>PAR LA <span class="red">PRÉCISION</span></span>
+  </h1>
+
+  <p class="hero-sub">
+    <span class="en">Professional automotive repair &amp; engineering in the heart of Mauritius. Your vehicle deserves the best.</span>
+    <span class="fr">Réparation automobile professionnelle &amp; ingénierie au cœur de Maurice. Votre véhicule mérite le meilleur.</span>
+  </p>
+
+  <div class="hero-cta">
+    <a href="#booking" class="btn-primary">
+      <span class="en">Book Appointment</span>
+      <span class="fr">Prendre Rendez-vous</span>
+    </a>
+    <a href="#services" class="btn-secondary">
+      <span class="en">Our Services</span>
+      <span class="fr">Nos Services</span>
+    </a>
+  </div>
+
+  <div class="scroll-indicator">
+    <div class="scroll-line"></div>
+    <span class="scroll-text">Scroll</span>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-num">500+</div>
+    <div class="stat-label en">Happy Clients</div>
+    <div class="stat-label fr">Clients Satisfaits</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">10+</div>
+    <div class="stat-label en">Years Experience</div>
+    <div class="stat-label fr">Années d'Expérience</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">6</div>
+    <div class="stat-label en">Expert Services</div>
+    <div class="stat-label fr">Services Experts</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">100%</div>
+    <div class="stat-label en">Quality Guaranteed</div>
+    <div class="stat-label fr">Qualité Garantie</div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="services-header">
+    <div>
+      <p class="section-eyebrow en">What We Do</p>
+      <p class="section-eyebrow fr">Ce Que Nous Faisons</p>
+      <h2 class="section-title en">OUR<br>SERVICES</h2>
+      <h2 class="section-title fr">NOS<br>SERVICES</h2>
+    </div>
+    <a href="#booking" class="btn-primary en">Book a Service</a>
+    <a href="#booking" class="btn-primary fr">Réserver</a>
+  </div>
+
+  <div class="services-grid">
+    <div class="service-card">
+      <span class="service-num">01</span>
+      <span class="service-icon">🔧</span>
+      <div class="service-name en">Engine Repair</div>
+      <div class="service-name fr">Réparation Moteur</div>
+      <div class="service-name-fr en">Réparation Moteur</div>
+      <div class="service-name-fr fr">Engine Repair</div>
+      <p class="service-desc en">Full diagnostic and repair of all engine types. From oil changes to complete overhauls, we keep your engine running at peak performance.</p>
+      <p class="service-desc fr">Diagnostic complet et réparation de tous types de moteurs. Des vidanges aux révisions complètes, nous maintenons votre moteur au sommet de ses performances.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-num">02</span>
+      <span class="service-icon">⚡</span>
+      <div class="service-name en">Electrical Systems</div>
+      <div class="service-name fr">Systèmes Électriques</div>
+      <div class="service-name-fr en">Systèmes Électriques</div>
+      <div class="service-name-fr fr">Electrical Systems</div>
+      <p class="service-desc en">Complete auto electrical diagnostics, wiring repair, battery, alternator and starter motor services for all vehicle models.</p>
+      <p class="service-desc fr">Diagnostic électrique complet, réparation du câblage, batterie, alternateur et démarreur pour tous modèles de véhicules.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-num">03</span>
+      <span class="service-icon">🛞</span>
+      <div class="service-name en">Suspension & Brakes</div>
+      <div class="service-name fr">Suspension & Freins</div>
+      <div class="service-name-fr en">Suspension & Freins</div>
+      <div class="service-name-fr fr">Suspension & Brakes</div>
+      <p class="service-desc en">Safety-first approach to brake and suspension systems. Wheel alignment, shock absorbers, brake pads and disc replacement.</p>
+      <p class="service-desc fr">Approche sécurité pour les systèmes de freinage et suspension. Géométrie, amortisseurs, plaquettes de frein et remplacement de disques.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-num">04</span>
+      <span class="service-icon">❄️</span>
+      <div class="service-name en">Air Conditioning</div>
+      <div class="service-name fr">Climatisation</div>
+      <div class="service-name-fr en">Climatisation</div>
+      <div class="service-name-fr fr">Air Conditioning</div>
+      <p class="service-desc en">AC recharging, compressor replacement and full air conditioning system service. Stay cool in the Mauritian heat.</p>
+      <p class="service-desc fr">Recharge de climatisation, remplacement du compresseur et entretien complet. Restez au frais sous la chaleur mauricienne.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-num">05</span>
+      <span class="service-icon">🔩</span>
+      <div class="service-name en">Car Engineering</div>
+      <div class="service-name fr">Ingénierie Auto</div>
+      <div class="service-name-fr en">Ingénierie Auto</div>
+      <div class="service-name-fr fr">Car Engineering</div>
+      <p class="service-desc en">Custom engineering solutions, performance tuning and specialist modifications for personal and commercial vehicles.</p>
+      <p class="service-desc fr">Solutions d'ingénierie sur mesure, optimisation des performances et modifications spécialisées pour véhicules particuliers et commerciaux.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-num">06</span>
+      <span class="service-icon">🔍</span>
+      <div class="service-name en">Full Inspection</div>
+      <div class="service-name fr">Inspection Complète</div>
+      <div class="service-name-fr en">Inspection Complète</div>
+      <div class="service-name-fr fr">Full Inspection</div>
+      <p class="service-desc en">Pre-purchase checks, roadworthiness inspections and full vehicle health reports. Know exactly what you're driving.</p>
+      <p class="service-desc fr">Contrôle avant achat, inspection de navigabilité et rapports complets sur l'état de votre véhicule. Sachez exactement ce que vous conduisez.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-visual">
+    <div class="about-visual-box">
+      🏎️
+      <div class="about-badge">
+        <span class="about-badge-num">10+</span>
+        <span class="about-badge-text">Years<br>Ans</span>
+      </div>
+    </div>
+  </div>
+  <div class="about-text">
+    <p class="section-eyebrow en">About Us</p>
+    <p class="section-eyebrow fr">À Propos</p>
+    <h2 class="section-title en">JEKO<br>TECH</h2>
+    <h2 class="section-title fr">JEKO<br>TECH</h2>
+    <p class="en">
+      <span>Jekotech Car Services Ltd</span> is a trusted automotive repair and engineering workshop based in <span>Nouvelle France, Mauritius</span>. We combine hands-on expertise with modern diagnostic technology to deliver reliable, high-quality vehicle care.
+    </p>
+    <p class="fr">
+      <span>Jekotech Car Services Ltd</span> est un atelier de réparation automobile de confiance basé à <span>Nouvelle France, Maurice</span>. Nous combinons expertise pratique et technologies de diagnostic modernes pour fournir des soins fiables et de haute qualité pour votre véhicule.
+    </p>
+    <p class="en">
+      Whether it's a routine service or a complex repair, our team of experienced technicians treats every vehicle with precision and care. We're here to keep Mauritius moving.
+    </p>
+    <p class="fr">
+      Qu'il s'agisse d'un entretien de routine ou d'une réparation complexe, notre équipe de techniciens expérimentés traite chaque véhicule avec précision et soin. Nous sommes là pour garder Maurice en mouvement.
+    </p>
+    <div class="location-tag">
+      📍 <span>Nouvelle France, Mauritius</span>
+    </div>
+  </div>
+</section>
+
+<!-- BOOKING -->
+<section id="booking">
+  <div class="booking-container">
+    <div class="booking-header">
+      <p class="section-eyebrow en">AI-Powered Booking</p>
+      <p class="section-eyebrow fr">Réservation par IA</p>
+      <h2 class="section-title en">BOOK YOUR<br>APPOINTMENT</h2>
+      <h2 class="section-title fr">RÉSERVEZ VOTRE<br>RENDEZ-VOUS</h2>
+      <p style="color: var(--silver); font-size: 14px;" class="en">Chat with our AI assistant to schedule your service — available 24/7.</p>
+      <p style="color: var(--silver); font-size: 14px;" class="fr">Discutez avec notre assistant IA pour planifier votre service — disponible 24h/24, 7j/7.</p>
+    </div>
+
+    <div class="chat-window">
+      <div class="chat-topbar">
+        <div class="chat-dot"></div>
+        <span class="chat-title">Jekotech Assistant</span>
+        <span class="chat-subtitle en">Online · Typically replies instantly</span>
+        <span class="chat-subtitle fr">En ligne · Répond instantanément</span>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <!-- Initial message injected by JS -->
+      </div>
+
+      <div class="quick-replies" id="quickReplies">
+        <button class="quick-reply" onclick="sendQuick('Engine Repair / Réparation Moteur')">🔧 Engine / Moteur</button>
+        <button class="quick-reply" onclick="sendQuick('Brakes & Suspension / Freins & Suspension')">🛞 Brakes / Freins</button>
+        <button class="quick-reply" onclick="sendQuick('Air Conditioning / Climatisation')">❄️ AC / Clim</button>
+        <button class="quick-reply" onclick="sendQuick('Full Inspection / Inspection Complète')">🔍 Inspection</button>
+        <button class="quick-reply" onclick="sendQuick('Other service / Autre service')">➕ Other / Autre</button>
+      </div>
+
+      <div class="chat-input-area">
+        <input class="chat-input" id="chatInput" type="text" placeholder="Type your message... / Écrivez votre message..." onkeydown="if(event.key==='Enter') sendMessage()" />
+        <button class="chat-send" id="sendBtn" onclick="sendMessage()">
+          <span class="en">SEND</span><span class="fr">ENVOYER</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div>
+    <p class="section-eyebrow en">Get In Touch</p>
+    <p class="section-eyebrow fr">Nous Contacter</p>
+    <h2 class="section-title en">CONTACT<br>US</h2>
+    <h2 class="section-title fr">CONTACTEZ<br>-NOUS</h2>
+    <div class="contact-info-block">
+      <div class="contact-item">
+        <div class="contact-icon">📍</div>
+        <div>
+          <p class="contact-detail-label en">Location</p>
+          <p class="contact-detail-label fr">Adresse</p>
+          <p class="contact-detail-val">Nouvelle France, Mauritius</p>
+          <p class="contact-detail-val-fr en">Nouvelle France, Maurice</p>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">🕐</div>
+        <div>
+          <p class="contact-detail-label en">Opening Hours</p>
+          <p class="contact-detail-label fr">Heures d'Ouverture</p>
+          <p class="contact-detail-val en">Mon–Fri: 8:00 AM – 5:30 PM</p>
+          <p class="contact-detail-val fr">Lun–Ven: 8h00 – 17h30</p>
+          <p class="contact-detail-val-fr en">Saturday: 8:00 AM – 1:00 PM</p>
+          <p class="contact-detail-val-fr fr">Samedi: 8h00 – 13h00</p>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">📱</div>
+        <div>
+          <p class="contact-detail-label en">Facebook</p>
+          <p class="contact-detail-label fr">Facebook</p>
+          <p class="contact-detail-val">Jekotech Car Services Ltd</p>
+          <p class="contact-detail-val-fr">@JekotechCarServices</p>
+        </div>
+      </div>
+    </div>
+    <div class="social-links">
+      <a href="https://www.facebook.com/p/Jekotech-Car-Services-Ltd-100083030927354/" target="_blank" class="social-link">
+        📘 <span class="en">Facebook Page</span><span class="fr">Page Facebook</span>
+      </a>
+      <a href="#booking" class="social-link">
+        📅 <span class="en">Book Now</span><span class="fr">Réserver</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="map-placeholder">
+    <div class="map-pin">📍</div>
+    <div class="map-text en">Nouvelle France<br>Mauritius 🇲🇺</div>
+    <div class="map-text fr">Nouvelle France<br>Maurice 🇲🇺</div>
+    <div class="map-address">Jekotech Car Services Ltd</div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">JEKO<span>TECH</span></div>
+  <div class="footer-copy">© 2025 Jekotech Car Services Ltd — Mauritius</div>
+  <div class="footer-tagline en">Driven by Precision</div>
+  <div class="footer-tagline fr">Guidés par la Précision</div>
+</footer>
+
+<script>
+// ---- LANGUAGE TOGGLE ----
+function setLang(lang) {
+  document.body.classList.toggle('lang-fr', lang === 'fr');
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`).classList.add('active');
+  currentLang = lang;
+}
+
+let currentLang = 'en';
+
+// ---- CHAT AI BOOKING ----
+const SYSTEM_PROMPT = `You are the friendly booking assistant for Jekotech Car Services Ltd, an automotive repair and engineering garage located in Nouvelle France, Mauritius. 
+
+Your role is to help customers book appointments. You respond in the same language the customer uses (English or French, or both).
+
+Services offered:
+1. Engine Repair / Réparation Moteur
+2. Electrical Systems / Systèmes Électriques  
+3. Suspension & Brakes / Suspension & Freins
+4. Air Conditioning / Climatisation
+5. Car Engineering / Ingénierie Auto
+6. Full Inspection / Inspection Complète
+
+Booking process:
+1. Greet the customer warmly
+2. Ask which service they need
+3. Ask their preferred date and time (Mon-Fri 8AM-5:30PM, Sat 8AM-1PM)
+4. Ask for their name and phone number
+5. Confirm the appointment details and tell them the team will confirm via call
+
+Keep responses concise (2-4 sentences), warm and professional. If they write in French, respond in French. If English, respond in English. If mixed, respond in both.
+
+Important: You are an AI assistant. For urgent matters, advise them to call directly or message the Facebook page "Jekotech Car Services Ltd".`;
+
+const messages = [];
+
+function initChat() {
+  const welcome = currentLang === 'fr'
+    ? "👋 Bonjour ! Je suis l'assistant IA de Jekotech Car Services. Comment puis-je vous aider aujourd'hui ? Quel service souhaitez-vous réserver ?"
+    : "👋 Hello! I'm the Jekotech Car Services AI assistant. How can I help you today? Which service would you like to book?";
+  addMessage('bot', welcome);
+  messages.push({ role: 'assistant', content: welcome });
+}
+
+function addMessage(role, text) {
+  const container = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `msg ${role === 'user' ? 'user' : ''}`;
+  div.innerHTML = `
+    <div class="msg-avatar">${role === 'user' ? '👤' : '🔧'}</div>
+    <div class="msg-bubble">${text.replace(/\n/g, '<br>')}</div>
+  `;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function showTyping() {
+  const container = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'msg';
+  div.id = 'typingIndicator';
+  div.innerHTML = `
+    <div class="msg-avatar">🔧</div>
+    <div class="typing-indicator">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+  `;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const btn = document.getElementById('sendBtn');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  btn.disabled = true;
+  addMessage('user', text);
+  messages.push({ role: 'user', content: text });
+
+  showTyping();
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: messages
+      })
+    });
+
+    const data = await response.json();
+    removeTyping();
+
+    const reply = data.content?.[0]?.text || 'Sorry, I could not process your request. Please try again.';
+    addMessage('bot', reply);
+    messages.push({ role: 'assistant', content: reply });
+  } catch (err) {
+    removeTyping();
+    addMessage('bot', 'Connection issue. Please try again or message us on Facebook. / Problème de connexion. Réessayez ou contactez-nous sur Facebook.');
+  }
+
+  btn.disabled = false;
+  input.focus();
+}
+
+function sendQuick(text) {
+  document.getElementById('chatInput').value = text;
+  sendMessage();
+}
+
+// Init
+window.addEventListener('load', initChat);
+</script>
+</body>
+</html>
