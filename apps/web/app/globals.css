@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Industrial sharp corners everywhere */
+  * {
+    border-radius: 0 !important;
+  }
+
+  /* Exception: circles and pills need full radius */
+  .rounded-full {
+    border-radius: 9999px !important;
+  }
+
+  /* Hairline scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer utilities {
+  /* 1.5px border — used on inputs and CTA buttons */
+  .border-1\.5 {
+    border-width: 1.5px;
+  }
+
+  /* Mono metadata strip pattern */
+  .mono-label {
+    @apply font-mono text-[10px] font-semibold tracking-mono uppercase;
+  }
+}

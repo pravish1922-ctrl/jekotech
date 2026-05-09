@@ -1,0 +1,53 @@
+[build]
+  command   = "npm run build --workspace=apps/web"
+  publish   = "apps/web/.next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  directory    = "netlify/functions"
+  node_bundler = "esbuild"
+
+# ── API routing: /api/* → Netlify functions ──────────────────────────────────
+
+[[redirects]]
+  from   = "/api/availability"
+  to     = "/.netlify/functions/airtable-availability"
+  status = 200
+
+[[redirects]]
+  from   = "/api/bookings"
+  to     = "/.netlify/functions/airtable-create-booking"
+  status = 200
+
+[[redirects]]
+  from   = "/api/bookings/:id"
+  to     = "/.netlify/functions/airtable-create-booking"
+  status = 200
+
+[[redirects]]
+  from   = "/api/qb/*"
+  to     = "/.netlify/functions/quickbooks-lookup-vehicle"
+  status = 200
+
+[[redirects]]
+  from   = "/api/claude/*"
+  to     = "/.netlify/functions/claude-summarize"
+  status = 200
+
+[[redirects]]
+  from   = "/api/whatsapp/*"
+  to     = "/.netlify/functions/whatsapp-send"
+  status = 200
+
+# ── Security headers ──────────────────────────────────────────────────────────
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options            = "DENY"
+    X-Content-Type-Options     = "nosniff"
+    Referrer-Policy            = "strict-origin-when-cross-origin"
+    Permissions-Policy         = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security  = "max-age=31536000; includeSubDomains; preload"

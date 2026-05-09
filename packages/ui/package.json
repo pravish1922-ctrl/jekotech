@@ -1,0 +1,11 @@
+{
+  "name": "@jekotech/ui",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "peerDependencies": {
+    "react": "^18",
+    "tailwindcss": "^3"
+  }
+}

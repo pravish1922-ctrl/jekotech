@@ -1,0 +1,20 @@
+{
+  "name": "jekotech-garage",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web",
+    "lint": "npm run lint --workspace=apps/web",
+    "type-check": "npm run type-check --workspace=apps/web",
+    "wiki-save": "node scripts/wiki-save.mjs"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3"
+  }
+}
