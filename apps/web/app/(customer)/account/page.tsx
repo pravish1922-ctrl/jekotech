@@ -1,4 +1,4 @@
-import { BottomNav } from '@/components/ui/bottom-nav'
+import { BottomNav } from '../../../components/ui/bottom-nav'
 
 export default function AccountPage() {
   return (

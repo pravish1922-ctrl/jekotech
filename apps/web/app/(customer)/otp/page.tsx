@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { JKMark } from '@/components/ui/jk-mark'
+import { JKMark } from '../../../components/ui/jk-mark'
 import { createBrowserSupabaseClient as createBrowserClient } from '../../../lib/supabase-browser'
 
 const DIGIT_COUNT = 6

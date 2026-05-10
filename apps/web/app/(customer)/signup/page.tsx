@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { JKMark } from '@/components/ui/jk-mark'
+import { JKMark } from '../../../components/ui/jk-mark'
 import { createBrowserSupabaseClient as createBrowserClient } from '../../../lib/supabase-browser'
 
 interface PasswordRule {

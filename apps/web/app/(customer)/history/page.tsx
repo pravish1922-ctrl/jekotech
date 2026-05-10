@@ -1,7 +1,7 @@
-import { createServerSupabaseClient as createServerClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient as createServerClient } from '../../../lib/supabase-server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BottomNav } from '@/components/ui/bottom-nav'
+import { BottomNav } from '../../../components/ui/bottom-nav'
 import { HistoryList } from './history-list'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
