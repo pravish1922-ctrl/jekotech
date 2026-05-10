@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent } from 'react'
+import { Suspense, useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { JKMark } from '@/components/ui/jk-mark'
 import { createBrowserClient } from '@/lib/supabase'
@@ -8,7 +8,7 @@ import { createBrowserClient } from '@/lib/supabase'
 const DIGIT_COUNT = 6
 const RESEND_SECONDS = 45
 
-export default function OtpPage() {
+function OtpContent() {
   const router        = useRouter()
   const [supabase]    = useState(() => createBrowserClient())
   const searchParams  = useSearchParams()
@@ -214,5 +214,13 @@ export default function OtpPage() {
         </button>
       </p>
     </main>
+  )
+}
+
+export default function OtpPage() {
+  return (
+    <Suspense>
+      <OtpContent />
+    </Suspense>
   )
 }

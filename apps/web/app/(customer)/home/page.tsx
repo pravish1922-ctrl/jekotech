@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase'
+import { createServerSupabaseClient as createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { BottomNav } from '@/components/ui/bottom-nav'
