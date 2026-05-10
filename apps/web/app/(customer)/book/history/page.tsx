@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createBrowserClient } from '@/lib/supabase'
+import { createBrowserSupabaseClient as createBrowserClient } from '@/lib/supabase-browser'
 import { useBooking } from '../booking-context'
 
 interface PastBooking {

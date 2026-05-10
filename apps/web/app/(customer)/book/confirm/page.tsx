@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createBrowserClient } from '@/lib/supabase'
+import { createBrowserSupabaseClient as createBrowserClient } from '@/lib/supabase-browser'
 import { useBooking } from '../booking-context'
 
 function formatMUR(n: number): string {

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { createBrowserClient } from '@/lib/supabase'
+import { createBrowserSupabaseClient as createBrowserClient } from '@/lib/supabase-browser'
 import { useBooking } from '../booking-context'
 
 const MAX_PHOTOS = 4
