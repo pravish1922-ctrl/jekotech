@@ -9,4 +9,6 @@ echo "=== CHECKING GIT STATUS ==="
 git ls-files lib/ | head -20
 echo "=== RUNNING BUILD ==="
 npm run build 2>&1
-echo "=== BUILD EXIT: $? ==="
+BUILD_EXIT=$?
+echo "=== BUILD EXIT: $BUILD_EXIT ==="
+exit $BUILD_EXIT
