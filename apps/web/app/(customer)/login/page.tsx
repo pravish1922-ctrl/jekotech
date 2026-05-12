@@ -42,11 +42,25 @@ export default function LoginPage() {
     setError(null)
     setLoading(true)
 
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (authError) {
-      setError(authError.message)
+    if (authError || !authData.user) {
+      setError(authError?.message ?? 'Sign in failed. Please try again.')
       setLoading(false)
+      return
+    }
+
+    // Guard: ensure clients row exists (email-verified users only)
+    const { data: clientRow } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('id', authData.user.id)
+      .single()
+
+    if (!clientRow) {
+      // Account exists in auth but was never verified — send back to signup
+      await supabase.auth.signOut()
+      router.push('/signup')
       return
     }
 

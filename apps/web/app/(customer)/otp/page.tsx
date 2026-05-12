@@ -5,15 +5,17 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { JKMark } from '../../../components/ui/jk-mark'
 import { createBrowserSupabaseClient as createBrowserClient } from '../../../lib/supabase-browser'
 
-const DIGIT_COUNT = 6
+const DIGIT_COUNT    = 6
 const RESEND_SECONDS = 45
 
 function OtpContent() {
-  const router        = useRouter()
-  const [supabase]    = useState(() => createBrowserClient())
-  const searchParams  = useSearchParams()
-  const phone         = searchParams.get('phone') ?? ''
-  const maskedPhone   = phone.length >= 4 ? `••• ${phone.slice(-4)}` : '••••'
+  const router       = useRouter()
+  const [supabase]   = useState(() => createBrowserClient())
+  const searchParams = useSearchParams()
+  const email        = searchParams.get('email') ?? ''
+  const maskedEmail  = email.includes('@')
+    ? `${email.slice(0, 3)}***@${email.split('@')[1]}`
+    : '***'
 
   const [digits, setDigits]       = useState<string[]>(Array(DIGIT_COUNT).fill(''))
   const [activeIdx, setActiveIdx] = useState(0)
@@ -24,7 +26,6 @@ function OtpContent() {
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(DIGIT_COUNT).fill(null))
 
-  // Countdown timer
   useEffect(() => {
     if (seconds <= 0) { setCanResend(true); return }
     const id = setTimeout(() => setSeconds(s => s - 1), 1000)
@@ -36,7 +37,7 @@ function OtpContent() {
     ':' +
     String(seconds % 60).padStart(2, '0')
 
-  const code = digits.join('')
+  const code       = digits.join('')
   const isComplete = digits.every(d => d !== '')
 
   function focusAt(idx: number) {
@@ -46,7 +47,7 @@ function OtpContent() {
 
   function handleChange(idx: number, raw: string) {
     const digit = raw.replace(/\D/g, '').slice(-1)
-    const next = digits.map((d, i) => (i === idx ? digit : d))
+    const next  = digits.map((d, i) => (i === idx ? digit : d))
     setDigits(next)
     setError(null)
     if (digit && idx < DIGIT_COUNT - 1) focusAt(idx + 1)
@@ -61,7 +62,7 @@ function OtpContent() {
         setDigits(d => d.map((v, i) => (i === idx - 1 ? '' : v)))
       }
     }
-    if (e.key === 'ArrowLeft' && idx > 0) focusAt(idx - 1)
+    if (e.key === 'ArrowLeft'  && idx > 0)              focusAt(idx - 1)
     if (e.key === 'ArrowRight' && idx < DIGIT_COUNT - 1) focusAt(idx + 1)
   }
 
@@ -69,9 +70,7 @@ function OtpContent() {
     e.preventDefault()
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, DIGIT_COUNT)
     if (!pasted) return
-    const next = Array(DIGIT_COUNT)
-      .fill('')
-      .map((_, i) => pasted[i] ?? '')
+    const next = Array(DIGIT_COUNT).fill('').map((_, i) => pasted[i] ?? '')
     setDigits(next)
     focusAt(Math.min(pasted.length, DIGIT_COUNT - 1))
   }
@@ -81,14 +80,30 @@ function OtpContent() {
     setError(null)
     setLoading(true)
 
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      phone,
+    const { data, error: verifyError } = await supabase.auth.verifyOtp({
+      email,
       token: code,
-      type:  'sms',
+      type:  'email',
     })
 
-    if (verifyError) {
-      setError(verifyError.message)
+    if (verifyError || !data.user) {
+      setError(verifyError?.message ?? 'Verification failed. Please try again.')
+      setLoading(false)
+      return
+    }
+
+    // Insert clients row now that email is confirmed
+    const { error: insertError } = await supabase.from('clients').insert({
+      id:              data.user.id,
+      name:            (data.user.user_metadata?.name as string | undefined) ?? '',
+      email:           data.user.email ?? email,
+      role:            'customer',
+      whatsapp_opt_in: false,
+    })
+
+    if (insertError && insertError.code !== '23505') {
+      // 23505 = unique_violation (row already exists — that's fine)
+      setError(insertError.message)
       setLoading(false)
       return
     }
@@ -102,7 +117,7 @@ function OtpContent() {
     setCanResend(false)
     setDigits(Array(DIGIT_COUNT).fill(''))
     focusAt(0)
-    await supabase.auth.signInWithOtp({ phone })
+    await supabase.auth.resend({ email, type: 'signup' })
   }
 
   return (
@@ -124,14 +139,14 @@ function OtpContent() {
 
       {/* Heading + sub */}
       <h1 className="font-display text-[28px] font-bold text-bone tracking-tighter mb-2">
-        Check your phone.
+        Check your email.
       </h1>
       <p className="font-sans text-[14px] text-steel3 mb-10">
         We sent a 6-digit code to{' '}
-        <span className="font-mono text-bone">{maskedPhone}</span>
+        <span className="font-mono text-bone">{maskedEmail}</span>
       </p>
 
-      {/* 6-digit OTP input row — fixed 44px width each; total 324px at gap-3 fits 390px */}
+      {/* 6-digit OTP input row */}
       <div
         className="flex gap-3"
         role="group"
@@ -204,7 +219,7 @@ function OtpContent() {
 
       {/* Back */}
       <p className="mt-auto pt-10 text-center font-mono text-[10px] tracking-mono uppercase text-steel2">
-        Wrong number?{' '}
+        Wrong email?{' '}
         <button
           type="button"
           onClick={() => router.back()}

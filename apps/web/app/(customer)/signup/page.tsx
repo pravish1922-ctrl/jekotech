@@ -59,7 +59,6 @@ function FieldInput({
   onChange,
   placeholder,
   autoComplete,
-  prefix,
 }: {
   id: string
   label: string
@@ -68,7 +67,6 @@ function FieldInput({
   onChange: (v: string) => void
   placeholder?: string
   autoComplete?: string
-  prefix?: string
 }) {
   return (
     <div>
@@ -90,11 +88,6 @@ function FieldInput({
           el.style.borderColor = '#0B0D0E'
         }}
       >
-        {prefix && (
-          <span className="font-mono text-[12px] text-steel2 pl-3.5 pr-2 shrink-0 select-none">
-            {prefix}
-          </span>
-        )}
         <input
           id={id}
           type={type}
@@ -103,7 +96,6 @@ function FieldInput({
           placeholder={placeholder}
           autoComplete={autoComplete}
           className="flex-1 h-full bg-transparent text-ink font-sans text-[15px] font-medium outline-none px-3.5 placeholder:text-bone3"
-          style={{ paddingLeft: prefix ? 0 : undefined }}
         />
       </div>
     </div>
@@ -115,14 +107,13 @@ export default function SignupPage() {
   const [supabase] = useState(() => createBrowserClient())
   const [name, setName]         = useState('')
   const [email, setEmail]       = useState('')
-  const [mobile, setMobile]     = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState<string | null>(null)
 
-  const ruleResults = PASSWORD_RULES.map(r => ({ ...r, passed: r.test(password) }))
+  const ruleResults  = PASSWORD_RULES.map(r => ({ ...r, passed: r.test(password) }))
   const allRulesPass = ruleResults.every(r => r.passed)
-  const canSubmit = name.trim() && email.trim() && mobile.trim() && allRulesPass
+  const canSubmit    = name.trim() && email.trim() && allRulesPass
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -130,38 +121,19 @@ export default function SignupPage() {
     setError(null)
     setLoading(true)
 
-    const fullPhone = `+230${mobile.replace(/\s/g, '')}`
-
-    // 1. Create the auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    const { error: authError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: name.trim() } },
+      options: { data: { name: name.trim() } },
     })
 
-    if (authError || !authData.user) {
-      setError(authError?.message ?? 'Sign up failed. Please try again.')
+    if (authError) {
+      setError(authError.message)
       setLoading(false)
       return
     }
 
-    // 2. Insert the client row (role defaults to 'customer')
-    const { error: insertError } = await supabase.from('clients').insert({
-      id:               authData.user.id,
-      name:             name.trim(),
-      email:            email.trim().toLowerCase(),
-      phone:            fullPhone,
-      role:             'customer',
-      whatsapp_opt_in:  false,
-    })
-
-    if (insertError) {
-      setError(insertError.message)
-      setLoading(false)
-      return
-    }
-
-    router.push('/home')
+    router.push(`/otp?email=${encodeURIComponent(email.trim())}&type=email`)
   }
 
   return (
@@ -207,17 +179,6 @@ export default function SignupPage() {
           autoComplete="email"
         />
 
-        <FieldInput
-          id="mobile"
-          label="Mobile Number"
-          type="tel"
-          value={mobile}
-          onChange={setMobile}
-          placeholder="5XXX XXXX"
-          autoComplete="tel"
-          prefix="+230"
-        />
-
         {/* Password + rules */}
         <div>
           <FieldInput
@@ -245,11 +206,6 @@ export default function SignupPage() {
           </p>
         )}
 
-        {/* Email verification note */}
-        <p className="font-mono text-[10px] tracking-mono uppercase text-steel2">
-          Verification email sent — check your inbox
-        </p>
-
         {/* CTA */}
         <button
           type="submit"
@@ -258,9 +214,9 @@ export default function SignupPage() {
           style={{ height: 56 }}
         >
           {loading ? (
-            <span className="font-mono text-[11px] tracking-mono">Creating account…</span>
+            <span className="font-mono text-[11px] tracking-mono">Sending code…</span>
           ) : (
-            <>Create Account <span aria-hidden>→</span></>
+            <>Continue <span aria-hidden>→</span></>
           )}
         </button>
       </form>
