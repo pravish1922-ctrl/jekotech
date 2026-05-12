@@ -21,6 +21,7 @@ export default function ServiceSelectPage() {
 
   const [services, setServices]   = useState<Service[]>([])
   const [loading,  setLoading]    = useState(true)
+  const [fetchErr, setFetchErr]   = useState<string | null>(null)
   const [selected, setSelected]   = useState(serviceId)
 
   useEffect(() => {
@@ -29,7 +30,8 @@ export default function ServiceSelectPage() {
       .select('id, name, description, base_price_mur, estimated_duration_min')
       .eq('active', true)
       .order('base_price_mur', { ascending: true })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) setFetchErr(error.message)
         setServices((data as Service[]) ?? [])
         setLoading(false)
       })
@@ -56,6 +58,10 @@ export default function ServiceSelectPage() {
       {loading ? (
         <p className="font-mono text-[10px] tracking-mono uppercase text-steel2">
           Loading services…
+        </p>
+      ) : fetchErr ? (
+        <p className="font-mono text-[10px] tracking-mono uppercase text-red" role="alert">
+          {fetchErr}
         </p>
       ) : (
         <ul className="flex flex-col gap-3">

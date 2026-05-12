@@ -24,16 +24,6 @@ const NEXT_PATH: Record<string, string> = {
   '/book/photos':   '/book/confirm',
 }
 
-const PREV_PATH: Record<string, string> = {
-  '/book':          '/home',
-  '/book/when':     '/book',
-  '/book/vehicle':  '/book/when',
-  '/book/history':  '/book/vehicle',
-  '/book/notes':    '/book/history',
-  '/book/photos':   '/book/notes',
-  '/book/confirm':  '/book/photos',
-}
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function BookingFooter() {
@@ -48,8 +38,7 @@ export function BookingFooter() {
   const displayStep = stepIdx + 1
 
   function handleBack() {
-    const prev = PREV_PATH[pathname]
-    if (prev) router.push(prev)
+    router.back()
   }
 
   function handleNext() {

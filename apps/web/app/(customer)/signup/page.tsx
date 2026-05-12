@@ -161,10 +161,7 @@ export default function SignupPage() {
       return
     }
 
-    // 3. Send phone OTP — non-fatal; user can resend on the next screen
-    await supabase.auth.signInWithOtp({ phone: fullPhone })
-
-    router.push(`/otp?phone=${encodeURIComponent(fullPhone)}`)
+    router.push('/home')
   }
 
   return (
@@ -248,6 +245,11 @@ export default function SignupPage() {
           </p>
         )}
 
+        {/* Email verification note */}
+        <p className="font-mono text-[10px] tracking-mono uppercase text-steel2">
+          Verification email sent — check your inbox
+        </p>
+
         {/* CTA */}
         <button
           type="submit"
@@ -256,9 +258,9 @@ export default function SignupPage() {
           style={{ height: 56 }}
         >
           {loading ? (
-            <span className="font-mono text-[11px] tracking-mono">Sending code…</span>
+            <span className="font-mono text-[11px] tracking-mono">Creating account…</span>
           ) : (
-            <>Verify Mobile <span aria-hidden>→</span></>
+            <>Create Account <span aria-hidden>→</span></>
           )}
         </button>
       </form>
