@@ -24,17 +24,34 @@ function GoogleIcon() {
 }
 
 export default function LoginPage() {
-  const router  = useRouter()
+  const router    = useRouter()
   const [supabase] = useState(() => createBrowserClient())
-  const [email, setEmail]           = useState('')
-  const [password, setPassword]     = useState('')
-  const [loading, setLoading]       = useState(false)
-  const [error, setError]           = useState<string | null>(null)
-  const [socialToast, setSocialToast] = useState(false)
+  const [email, setEmail]             = useState('')
+  const [password, setPassword]       = useState('')
+  const [loading, setLoading]         = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [error, setError]             = useState<string | null>(null)
+  const [appleToast, setAppleToast]   = useState(false)
 
-  function handleSocialClick() {
-    setSocialToast(true)
-    setTimeout(() => setSocialToast(false), 3500)
+  function handleAppleClick() {
+    setAppleToast(true)
+    setTimeout(() => setAppleToast(false), 3500)
+  }
+
+  async function handleGoogleLogin() {
+    setError(null)
+    setGoogleLoading(true)
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+    if (oauthError) {
+      setError(oauthError.message)
+      setGoogleLoading(false)
+    }
+    // No need to setGoogleLoading(false) on success — page will redirect
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -58,7 +75,6 @@ export default function LoginPage() {
       .single()
 
     if (!clientRow) {
-      // Account exists in auth but was never verified — send back to signup
       await supabase.auth.signOut()
       router.push('/signup')
       return
@@ -175,32 +191,41 @@ export default function LoginPage() {
 
       {/* Social login */}
       <div className="flex flex-col gap-3">
+
+        {/* Apple — coming soon */}
         <button
           type="button"
-          onClick={handleSocialClick}
+          onClick={handleAppleClick}
           className="w-full flex items-center justify-center gap-2.5 bg-transparent text-bone font-display font-semibold text-[13px] tracking-[0.04em] uppercase hover:bg-ink2 transition-colors duration-120"
           style={{ height: 48, border: '1.5px solid #2A2F33' }}
         >
           <AppleIcon />
           Continue with Apple
         </button>
+
+        {/* Google — live */}
         <button
           type="button"
-          onClick={handleSocialClick}
-          className="w-full flex items-center justify-center gap-2.5 bg-transparent text-bone font-display font-semibold text-[13px] tracking-[0.04em] uppercase hover:bg-ink2 transition-colors duration-120"
+          onClick={handleGoogleLogin}
+          disabled={googleLoading}
+          className="w-full flex items-center justify-center gap-2.5 bg-transparent text-bone font-display font-semibold text-[13px] tracking-[0.04em] uppercase hover:bg-ink2 transition-colors duration-120 disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ height: 48, border: '1.5px solid #2A2F33' }}
         >
           <GoogleIcon />
-          Continue with Google
+          {googleLoading ? (
+            <span className="font-mono text-[11px] tracking-mono">Redirecting…</span>
+          ) : (
+            'Continue with Google'
+          )}
         </button>
 
-        {/* Coming-soon notice */}
-        {socialToast && (
+        {/* Apple coming-soon toast only */}
+        {appleToast && (
           <p
             role="status"
             className="text-center font-mono text-[10px] tracking-mono uppercase text-steel3 pt-1"
           >
-            Coming soon — use email login for now
+            Apple login coming soon — use email or Google for now
           </p>
         )}
       </div>
