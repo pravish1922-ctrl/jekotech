@@ -6,8 +6,8 @@ import { useBooking } from './booking-context'
 
 interface Service {
   id: string
-  name: string
-  description: string
+  name_en: string
+  description_en: string
   base_price_mur: number
   estimated_duration_min: number
 }
@@ -19,15 +19,15 @@ function formatMUR(n: number): string {
 export default function ServiceSelectPage() {
   const { serviceId, setService, setCanProceed } = useBooking()
 
-  const [services, setServices]   = useState<Service[]>([])
-  const [loading,  setLoading]    = useState(true)
-  const [fetchErr, setFetchErr]   = useState<string | null>(null)
-  const [selected, setSelected]   = useState(serviceId)
+  const [services, setServices] = useState<Service[]>([])
+  const [loading,  setLoading]  = useState(true)
+  const [fetchErr, setFetchErr] = useState<string | null>(null)
+  const [selected, setSelected] = useState(serviceId)
 
   useEffect(() => {
     const sb = createBrowserClient()
     sb.from('services')
-      .select('id, name, description, base_price_mur, estimated_duration_min')
+      .select('id, name_en, description_en, base_price_mur, estimated_duration_min')
       .eq('active', true)
       .order('base_price_mur', { ascending: true })
       .then(({ data, error }) => {
@@ -43,7 +43,7 @@ export default function ServiceSelectPage() {
 
   function pick(svc: Service) {
     setSelected(svc.id)
-    setService(svc.id, svc.name, svc.base_price_mur, svc.estimated_duration_min)
+    setService(svc.id, svc.name_en, svc.base_price_mur, svc.estimated_duration_min)
   }
 
   return (
@@ -74,19 +74,19 @@ export default function ServiceSelectPage() {
                   onClick={() => pick(svc)}
                   className="w-full text-left flex items-stretch border transition-colors duration-120"
                   style={{
-                    borderColor:   isSelected ? '#FF5A1F' : '#2A2F33',
+                    borderColor:     isSelected ? '#FF5A1F' : '#2A2F33',
                     borderLeftWidth: 3,
-                    background:    isSelected ? '#15181A' : 'transparent',
+                    background:      isSelected ? '#15181A' : 'transparent',
                   }}
                 >
                   {/* Left content */}
                   <div className="flex-1 px-4 py-4">
                     <p className="font-display font-semibold text-[15px] text-bone mb-1">
-                      {svc.name}
+                      {svc.name_en}
                     </p>
-                    {svc.description ? (
+                    {svc.description_en ? (
                       <p className="font-sans text-[12px] text-steel3 leading-snug">
-                        {svc.description}
+                        {svc.description_en}
                       </p>
                     ) : null}
                   </div>
