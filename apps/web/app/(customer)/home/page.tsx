@@ -18,15 +18,17 @@ interface UpcomingBooking {
 }
 
 interface Visit {
+  id: string
   reference: string
   service_ids: string[]
   scheduled_start: string
+  status: string
   final_cost_mur: number | null
 }
 
 interface Vehicle {
   id: string
-  registration: string
+  registration_number: string
   make: string
   model: string
   year: number
@@ -97,6 +99,8 @@ export default async function HomePage() {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) redirect('/login')
 
+  const now = new Date().toISOString()
+
   // Phase 1 — parallel fetches
   const [
     { data: clientRaw },
@@ -115,34 +119,36 @@ export default async function HomePage() {
       .select('id, reference, service_ids, bay_number, scheduled_start, status, assigned_mechanic_id')
       .eq('client_id', user.id)
       .in('status', ['pending', 'confirmed', 'in_progress'])
-      .order('scheduled_start', { ascending: true })
-      .limit(1),
+      .gte('scheduled_start', now)
+      .order('scheduled_start', { ascending: true }),
 
     supabase
       .from('vehicles')
-      .select('id, registration, make, model, year, mileage')
+      .select('id, registration_number, make, model, year, mileage')
       .eq('owner_client_id', user.id)
       .order('created_at', { ascending: false }),
 
     supabase
       .from('bookings')
-      .select('reference, service_ids, scheduled_start, final_cost_mur')
+      .select('id, reference, service_ids, scheduled_start, status, final_cost_mur')
       .eq('client_id', user.id)
-      .eq('status', 'complete')
+      .neq('status', 'cancelled')
       .order('scheduled_start', { ascending: false })
-      .limit(3),
+      .limit(2),
   ])
 
-  const nextBooking = (bookingsRaw as UpcomingBooking[] | null)?.[0] ?? null
-  const vehicles    = (vehiclesRaw as Vehicle[] | null) ?? []
-  const visits      = (visitsRaw  as Visit[]   | null) ?? []
+  const upcomingBookings = (bookingsRaw as UpcomingBooking[] | null) ?? []
+  const vehicles         = (vehiclesRaw as Vehicle[] | null) ?? []
+  const visits           = (visitsRaw  as Visit[]   | null) ?? []
 
-  // Phase 2 — depends on nextBooking result
+  // Phase 2 — service names for all bookings
   const allSvcIds = [
-    ...(nextBooking?.service_ids ?? []),
+    ...upcomingBookings.flatMap(b => b.service_ids),
     ...visits.flatMap(v => v.service_ids),
   ].filter(Boolean)
 
+  // Mechanic for the next upcoming booking only
+  const nextBooking = upcomingBookings[0] ?? null
   const mechPromise = nextBooking?.assigned_mechanic_id
     ? supabase
         .from('mechanics')
@@ -171,10 +177,6 @@ export default async function HomePage() {
   const fullName  = (clientRaw as { name: string } | null)?.name ?? ''
   const firstName = getFirstName(fullName)
   const initials  = getInitials(fullName)
-  const bd        = nextBooking ? parseDate(nextBooking.scheduled_start) : null
-  const nextSvc   = nextBooking?.service_ids?.[0]
-    ? (svcMap.get(nextBooking.service_ids[0]) ?? 'Service')
-    : 'Service'
 
   return (
     <>
@@ -205,59 +207,71 @@ export default async function HomePage() {
 
         <div className="px-6 flex flex-col gap-5">
 
-          {/* ── Next booking ticket ──────────────────────────────────────── */}
-          {nextBooking && bd ? (
-            <article
-              className="bg-ink2 border border-ink4 shadow-ticket"
-              aria-label={`Next booking ${nextBooking.reference}`}
-            >
-              {/* Top strip */}
-              <div
-                className="flex items-center justify-between px-4 py-3"
-                style={{ borderBottom: '1px solid #2A2F33' }}
-              >
-                <span className="font-mono text-[11px] tracking-mono uppercase text-steel3">
-                  {nextBooking.reference}
-                </span>
-                <StatusPill status={nextBooking.status} />
-              </div>
+          {/* ── Upcoming bookings ────────────────────────────────────────── */}
+          {upcomingBookings.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              {upcomingBookings.map((booking, idx) => {
+                const bd      = parseDate(booking.scheduled_start)
+                const svcName = booking.service_ids?.[0]
+                  ? (svcMap.get(booking.service_ids[0]) ?? 'Service')
+                  : 'Service'
 
-              {/* Middle */}
-              <div className="px-4 py-5">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-mono text-[10px] uppercase text-steel3 tracking-mono">
-                    {bd.weekday}
-                  </span>
-                  <span className="font-display text-[28px] font-bold text-bone leading-none">
-                    {bd.day}
-                  </span>
-                  <span className="font-mono text-[10px] uppercase text-steel3 tracking-mono">
-                    {bd.month}
-                  </span>
-                  <span className="ml-auto font-mono text-[14px] text-bone tracking-mono">
-                    {bd.time}
-                  </span>
-                </div>
-                <p className="font-display font-semibold text-[15px] text-bone mt-3">
-                  {nextSvc}
-                </p>
-              </div>
+                return (
+                  <article
+                    key={booking.id}
+                    className="bg-ink2 border border-ink4 shadow-ticket"
+                    aria-label={`Booking ${booking.reference}`}
+                  >
+                    {/* Top strip */}
+                    <div
+                      className="flex items-center justify-between px-4 py-3"
+                      style={{ borderBottom: '1px solid #2A2F33' }}
+                    >
+                      <span className="font-mono text-[11px] tracking-mono uppercase text-steel3">
+                        {booking.reference}
+                      </span>
+                      <StatusPill status={booking.status} />
+                    </div>
 
-              {/* Bottom strip */}
-              <div
-                className="flex items-center justify-between px-4 py-3"
-                style={{ borderTop: '1px solid #2A2F33' }}
-              >
-                <span className="font-mono text-[10px] tracking-mono uppercase text-steel3">
-                  BAY {nextBooking.bay_number}
-                </span>
-                {mechanicName && (
-                  <span className="font-mono text-[10px] tracking-mono uppercase text-steel3">
-                    {mechanicName}
-                  </span>
-                )}
-              </div>
-            </article>
+                    {/* Middle */}
+                    <div className="px-4 py-5">
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-mono text-[10px] uppercase text-steel3 tracking-mono">
+                          {bd.weekday}
+                        </span>
+                        <span className="font-display text-[28px] font-bold text-bone leading-none">
+                          {bd.day}
+                        </span>
+                        <span className="font-mono text-[10px] uppercase text-steel3 tracking-mono">
+                          {bd.month}
+                        </span>
+                        <span className="ml-auto font-mono text-[14px] text-bone tracking-mono">
+                          {bd.time}
+                        </span>
+                      </div>
+                      <p className="font-display font-semibold text-[15px] text-bone mt-3">
+                        {svcName}
+                      </p>
+                    </div>
+
+                    {/* Bottom strip */}
+                    <div
+                      className="flex items-center justify-between px-4 py-3"
+                      style={{ borderTop: '1px solid #2A2F33' }}
+                    >
+                      <span className="font-mono text-[10px] tracking-mono uppercase text-steel3">
+                        BAY {booking.bay_number}
+                      </span>
+                      {idx === 0 && mechanicName && (
+                        <span className="font-mono text-[10px] tracking-mono uppercase text-steel3">
+                          {mechanicName}
+                        </span>
+                      )}
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
           ) : (
             <div className="border border-ink4 px-5 py-8 text-center">
               <p className="font-display font-semibold text-[15px] text-bone mb-1">
@@ -295,7 +309,7 @@ export default async function HomePage() {
                       style={{ height: 32, border: '1px solid #2A2F33' }}
                     >
                       <span className="font-mono text-[11px] font-bold tracking-mono uppercase text-bone">
-                        {v.registration}
+                        {v.registration_number}
                       </span>
                     </div>
                     <div className="min-w-0">
@@ -338,7 +352,7 @@ export default async function HomePage() {
                     : '—'
                   return (
                     <div
-                      key={v.reference}
+                      key={v.id}
                       className="flex items-center gap-3 px-4 py-3"
                       style={idx > 0 ? { borderTop: '1px solid #2A2F33' } : undefined}
                     >

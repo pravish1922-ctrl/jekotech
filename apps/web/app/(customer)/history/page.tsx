@@ -42,28 +42,31 @@ export default async function HistoryPage() {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) redirect('/login')
 
-  const [{ data: bookingsRaw }, { data: kpiRaw }] = await Promise.all([
+  const [{ data: bookingsRaw }, { data: allRaw }] = await Promise.all([
     supabase
       .from('bookings')
       .select('id, reference, service_ids, scheduled_start, status, estimated_cost_mur, final_cost_mur')
       .eq('client_id', user.id)
       .order('scheduled_start', { ascending: false }),
 
+    // All non-cancelled bookings for KPI computation
     supabase
       .from('bookings')
-      .select('final_cost_mur, scheduled_start')
+      .select('status, estimated_cost_mur, final_cost_mur, scheduled_start')
       .eq('client_id', user.id)
-      .eq('status', 'complete'),
+      .neq('status', 'cancelled'),
   ])
 
   const bookings = (bookingsRaw as Booking[] | null) ?? []
-  const complete = (kpiRaw as { final_cost_mur: number | null; scheduled_start: string }[] | null) ?? []
+  const allValid = (allRaw as { status: string; estimated_cost_mur: number; final_cost_mur: number | null; scheduled_start: string }[] | null) ?? []
+
+  const completed = allValid.filter(b => b.status === 'complete')
 
   const kpi: KpiData = {
-    visits:   complete.length,
-    spend:    complete.reduce((acc, b) => acc + (b.final_cost_mur ?? 0), 0),
-    lastDate: complete.length > 0
-      ? complete.sort((a, b) =>
+    visits:   allValid.length,
+    spend:    completed.reduce((acc, b) => acc + (b.estimated_cost_mur ?? 0), 0),
+    lastDate: allValid.length > 0
+      ? allValid.slice().sort((a, b) =>
           new Date(b.scheduled_start).getTime() - new Date(a.scheduled_start).getTime()
         )[0].scheduled_start
       : null,
