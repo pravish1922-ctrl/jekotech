@@ -152,7 +152,7 @@ export default async function HomePage() {
     : Promise.resolve(null)
 
   const svcPromise = allSvcIds.length > 0
-    ? supabase.from('services').select('id, name').in('id', allSvcIds)
+    ? supabase.from('services').select('id, name_en').in('id', allSvcIds)
     : Promise.resolve(null)
 
   const [mechResult, svcResult] = await Promise.all([mechPromise, svcPromise])
@@ -163,7 +163,7 @@ export default async function HomePage() {
 
   const svcMap = new Map<string, string>(
     svcResult?.data
-      ? (svcResult.data as { id: string; name: string }[]).map(s => [s.id, s.name])
+      ? (svcResult.data as { id: string; name_en: string }[]).map(s => [s.id, s.name_en])
       : [],
   )
 

@@ -7,14 +7,13 @@ import { HistoryList } from './history-list'
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Booking {
-  id:             string
-  reference:      string
-  service_ids:    string[]
-  scheduled_start: string
-  status:         string
+  id:                 string
+  reference:          string
+  service_ids:        string[]
+  scheduled_start:    string
+  status:             string
   estimated_cost_mur: number
-  final_cost_mur: number | null
-  vehicles:       { registration: string } | null
+  final_cost_mur:     number | null
 }
 
 interface KpiData {
@@ -46,7 +45,7 @@ export default async function HistoryPage() {
   const [{ data: bookingsRaw }, { data: kpiRaw }] = await Promise.all([
     supabase
       .from('bookings')
-      .select('id, reference, service_ids, scheduled_start, status, estimated_cost_mur, final_cost_mur, vehicles(registration)')
+      .select('id, reference, service_ids, scheduled_start, status, estimated_cost_mur, final_cost_mur')
       .eq('client_id', user.id)
       .order('scheduled_start', { ascending: false }),
 
@@ -73,11 +72,11 @@ export default async function HistoryPage() {
   // Fetch service name map
   const allSvcIds = bookings.flatMap(b => b.service_ids).filter(Boolean)
   const { data: svcRaw } = allSvcIds.length > 0
-    ? await supabase.from('services').select('id, name').in('id', allSvcIds)
+    ? await supabase.from('services').select('id, name_en').in('id', allSvcIds)
     : { data: [] }
 
   const svcMap = new Map(
-    ((svcRaw as { id: string; name: string }[] | null) ?? []).map(s => [s.id, s.name])
+    ((svcRaw as { id: string; name_en: string }[] | null) ?? []).map(s => [s.id, s.name_en])
   )
 
   return (

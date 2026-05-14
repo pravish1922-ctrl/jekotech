@@ -13,7 +13,7 @@ interface Booking {
   status:             string
   estimated_cost_mur: number
   final_cost_mur:     number | null
-  vehicles:           { registration: string } | null
+  vehicles?:          { registration: string } | null
 }
 
 type Filter = 'ALL' | 'UPCOMING' | 'COMPLETED' | 'CANCELLED'
