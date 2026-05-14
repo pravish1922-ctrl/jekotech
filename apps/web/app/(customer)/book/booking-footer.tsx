@@ -7,19 +7,19 @@ import { useBooking } from './booking-context'
 
 const STEPS = [
   { path: '/book',          name: 'SERVICE',  showNext: true },
-  { path: '/book/when',     name: 'WHEN',     showNext: true },
   { path: '/book/vehicle',  name: 'VEHICLE',  showNext: true },
   { path: '/book/history',  name: 'HISTORY',  showNext: true },
+  { path: '/book/when',     name: 'WHEN',     showNext: true },
   { path: '/book/notes',    name: 'NOTES',    showNext: true },
   { path: '/book/photos',   name: 'PHOTOS',   showNext: true },
   { path: '/book/confirm',  name: 'CONFIRM',  showNext: false }, // confirm page owns its CTA
 ] as const
 
 const NEXT_PATH: Record<string, string> = {
-  '/book':          '/book/when',
-  '/book/when':     '/book/vehicle',
+  '/book':          '/book/vehicle',
   '/book/vehicle':  '/book/history',
-  '/book/history':  '/book/notes',
+  '/book/history':  '/book/when',
+  '/book/when':     '/book/notes',
   '/book/notes':    '/book/photos',
   '/book/photos':   '/book/confirm',
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
 
 // ── State shape ───────────────────────────────────────────────────────────────
 
@@ -52,39 +52,53 @@ const BookingContext = createContext<BookingContextValue | null>(null)
 export function BookingProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<BookingState>(INITIAL)
 
-  function patch(update: Partial<BookingState>) {
-    setState(s => ({ ...s, ...update }))
-  }
+  // Stable references via useCallback (setState from useState is always stable)
+  const setService = useCallback((id: string, name: string, price: number, duration: number) => {
+    setState(s => ({ ...s, serviceId: id, serviceName: name, servicePrice: price, serviceDuration: duration }))
+  }, [])
 
-  const actions: BookingActions = {
-    setService(id, name, price, duration) {
-      patch({ serviceId: id, serviceName: name, servicePrice: price, serviceDuration: duration })
-    },
-    setDateTime(date, time) {
-      patch({ date, time })
-    },
-    setVehicle(id, reg, make, model, year, mileage) {
-      patch({ vehicleId: id, registration: reg, make, model, year, mileage })
-    },
-    setNotes(notes) {
-      patch({ notes })
-    },
-    addPhoto(url) {
-      setState(s => ({ ...s, photoUrls: [...s.photoUrls, url] }))
-    },
-    removePhoto(url) {
-      setState(s => ({ ...s, photoUrls: s.photoUrls.filter(u => u !== url) }))
-    },
-    setCanProceed(v) {
-      patch({ canProceed: v })
-    },
-    reset() {
-      setState(INITIAL)
-    },
+  const setDateTime = useCallback((date: string, time: string) => {
+    setState(s => ({ ...s, date, time }))
+  }, [])
+
+  const setVehicle = useCallback((id: string, reg: string, make: string, model: string, year: number, mileage: number) => {
+    setState(s => ({ ...s, vehicleId: id, registration: reg, make, model, year, mileage }))
+  }, [])
+
+  const setNotes = useCallback((notes: string) => {
+    setState(s => ({ ...s, notes }))
+  }, [])
+
+  const addPhoto = useCallback((url: string) => {
+    setState(s => ({ ...s, photoUrls: [...s.photoUrls, url] }))
+  }, [])
+
+  const removePhoto = useCallback((url: string) => {
+    setState(s => ({ ...s, photoUrls: s.photoUrls.filter(u => u !== url) }))
+  }, [])
+
+  const setCanProceed = useCallback((v: boolean) => {
+    setState(s => ({ ...s, canProceed: v }))
+  }, [])
+
+  const reset = useCallback(() => {
+    setState(INITIAL)
+  }, [])
+
+  const value: BookingContextValue = {
+    ...state,
+    setService,
+    setDateTime,
+    setVehicle,
+    setNotes,
+    addPhoto,
+    removePhoto,
+    setCanProceed,
+    reset,
   }
 
   return (
-    <BookingContext.Provider value={{ ...state, ...actions }}>
+    <BookingContext.Provider value={value}>
       {children}
     </BookingContext.Provider>
   )

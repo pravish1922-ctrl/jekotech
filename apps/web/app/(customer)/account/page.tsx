@@ -22,7 +22,11 @@ export default function AccountPage() {
         .select('name')
         .eq('id', user.id)
         .single()
-      if (data) setName((data as { name: string }).name)
+      const clientName = (data as { name: string } | null)?.name
+        || (user.user_metadata?.full_name as string | undefined)
+        || (user.user_metadata?.name as string | undefined)
+        || ''
+      setName(clientName)
     }
     load()
   }, [supabase, router])
