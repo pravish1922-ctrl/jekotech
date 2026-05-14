@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { BottomNav } from '../../../components/ui/bottom-nav'
 
-// ── Local types ───────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 type BookingStatus = 'pending' | 'confirmed' | 'in_progress' | 'complete' | 'cancelled'
 
@@ -17,13 +17,11 @@ interface UpcomingBooking {
   assigned_mechanic_id: string | null
 }
 
-interface Visit {
+interface CompletedVisit {
   id: string
   reference: string
   service_ids: string[]
   scheduled_start: string
-  status: string
-  final_cost_mur: number | null
 }
 
 interface Vehicle {
@@ -33,13 +31,18 @@ interface Vehicle {
   model: string
   year: number
   mileage: number
+  colour: string | null
+}
+
+interface TimelineEntry {
+  id: string
+  reference: string
+  service_ids: string[]
+  scheduled_start: string
+  tag: 'UPCOMING' | 'PAST'
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function formatMUR(n: number): string {
-  return `₨ ${n.toLocaleString('en-US')}`
-}
 
 function getFirstName(name: string): string {
   return name.trim().split(/\s+/)[0] ?? name
@@ -103,14 +106,12 @@ export default async function HomePage() {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) redirect('/login')
 
-  const now = new Date().toISOString()
-
   // Phase 1 — parallel fetches
   const [
     { data: clientRaw },
     { data: bookingsRaw },
     { data: vehiclesRaw },
-    { data: visitsRaw },
+    { data: completedRaw },
   ] = await Promise.all([
     supabase
       .from('clients')
@@ -118,47 +119,43 @@ export default async function HomePage() {
       .eq('id', user.id)
       .single(),
 
+    // All upcoming regardless of time — status is the source of truth
     supabase
       .from('bookings')
       .select('id, reference, service_ids, bay_number, scheduled_start, status, assigned_mechanic_id')
       .eq('client_id', user.id)
       .in('status', ['pending', 'confirmed', 'in_progress'])
-      .gte('scheduled_start', now)
       .order('scheduled_start', { ascending: true }),
 
     supabase
       .from('vehicles')
-      .select('id, registration, make, model, year, mileage')
+      .select('id, registration, make, model, year, mileage, colour')
       .eq('owner_client_id', user.id)
       .order('created_at', { ascending: false }),
 
     supabase
       .from('bookings')
-      .select('id, reference, service_ids, scheduled_start, status, final_cost_mur')
+      .select('id, reference, service_ids, scheduled_start')
       .eq('client_id', user.id)
-      .neq('status', 'cancelled')
+      .eq('status', 'complete')
       .order('scheduled_start', { ascending: false })
-      .limit(2),
+      .limit(3),
   ])
 
-  const upcomingBookings = (bookingsRaw as UpcomingBooking[] | null) ?? []
-  const vehicles         = (vehiclesRaw as Vehicle[] | null) ?? []
-  const visits           = (visitsRaw  as Visit[]   | null) ?? []
+  const upcomingBookings  = (bookingsRaw  as UpcomingBooking[]  | null) ?? []
+  const vehicles          = (vehiclesRaw  as Vehicle[]          | null) ?? []
+  const completedVisits   = (completedRaw as CompletedVisit[]   | null) ?? []
 
-  // Phase 2 — service names for all bookings
+  // Phase 2 — service names for upcoming + completed
   const allSvcIds = [
     ...upcomingBookings.flatMap(b => b.service_ids),
-    ...visits.flatMap(v => v.service_ids),
+    ...completedVisits.flatMap(v => v.service_ids),
   ].filter(Boolean)
 
-  // Mechanic for the next upcoming booking only
-  const nextBooking = upcomingBookings[0] ?? null
-  const mechPromise = nextBooking?.assigned_mechanic_id
-    ? supabase
-        .from('mechanics')
-        .select('name')
-        .eq('id', nextBooking.assigned_mechanic_id)
-        .single()
+  // Mechanic for the first upcoming booking only
+  const nextBooking  = upcomingBookings[0] ?? null
+  const mechPromise  = nextBooking?.assigned_mechanic_id
+    ? supabase.from('mechanics').select('name').eq('id', nextBooking.assigned_mechanic_id).single()
     : Promise.resolve(null)
 
   const svcPromise = allSvcIds.length > 0
@@ -167,9 +164,7 @@ export default async function HomePage() {
 
   const [mechResult, svcResult] = await Promise.all([mechPromise, svcPromise])
 
-  const mechanicName = mechResult?.data
-    ? (mechResult.data as { name: string }).name
-    : null
+  const mechanicName = (mechResult?.data as { name: string } | null)?.name ?? null
 
   const svcMap = new Map<string, string>(
     svcResult?.data
@@ -177,7 +172,14 @@ export default async function HomePage() {
       : [],
   )
 
-  // Derived display values
+  // Mixed timeline: upcoming first (ASC), then completed (DESC), capped at 3
+  const upcomingSlice  = upcomingBookings.slice(0, 3)
+  const completedSlice = completedVisits.slice(0, Math.max(0, 3 - upcomingSlice.length))
+  const timeline: TimelineEntry[] = [
+    ...upcomingSlice.map(b => ({ id: b.id, reference: b.reference, service_ids: b.service_ids, scheduled_start: b.scheduled_start, tag: 'UPCOMING' as const })),
+    ...completedSlice.map(b => ({ ...b, tag: 'PAST' as const })),
+  ]
+
   const fullName  = (clientRaw as { name: string } | null)?.name ?? ''
   const firstName = getFirstName(fullName)
   const initials  = getInitials(fullName)
@@ -211,7 +213,7 @@ export default async function HomePage() {
 
         <div className="px-6 flex flex-col gap-5">
 
-          {/* ── Upcoming bookings ────────────────────────────────────────── */}
+          {/* ── Upcoming booking cards ───────────────────────────────────── */}
           {upcomingBookings.length > 0 ? (
             <div className="flex flex-col gap-3">
               {upcomingBookings.map((booking, idx) => {
@@ -226,7 +228,6 @@ export default async function HomePage() {
                     className="bg-ink2 border border-ink4 shadow-ticket"
                     aria-label={`Booking ${booking.reference}`}
                   >
-                    {/* Top strip */}
                     <div
                       className="flex items-center justify-between px-4 py-3"
                       style={{ borderBottom: '1px solid #2A2F33' }}
@@ -237,7 +238,6 @@ export default async function HomePage() {
                       <StatusPill status={booking.status} />
                     </div>
 
-                    {/* Middle */}
                     <div className="px-4 py-5">
                       <div className="flex items-baseline gap-2">
                         <span className="font-mono text-[10px] uppercase text-steel3 tracking-mono">
@@ -263,7 +263,6 @@ export default async function HomePage() {
                       </p>
                     </div>
 
-                    {/* Bottom strip */}
                     <div
                       className="flex items-center justify-between px-4 py-3"
                       style={{ borderTop: '1px solid #2A2F33' }}
@@ -303,12 +302,22 @@ export default async function HomePage() {
 
           {/* ── Your fleet ──────────────────────────────────────────────── */}
           <section>
-            <p className="font-mono text-[9px] tracking-mono2 uppercase text-steel2 mb-3">
-              YOUR FLEET
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="font-mono text-[9px] tracking-mono2 uppercase text-steel2">
+                YOUR FLEET
+              </p>
+              {vehicles.length > 0 && (
+                <Link
+                  href="/fleet"
+                  className="font-mono text-[9px] tracking-mono2 uppercase text-orange hover:text-orangeDeep transition-colors duration-120"
+                >
+                  SEE ALL →
+                </Link>
+              )}
+            </div>
             {vehicles.length > 0 ? (
               <ul className="flex flex-col gap-3">
-                {vehicles.map(v => (
+                {vehicles.slice(0, 2).map(v => (
                   <li
                     key={v.id}
                     className="flex items-center gap-4 border border-ink4 px-4 py-3"
@@ -326,7 +335,7 @@ export default async function HomePage() {
                         {v.make} {v.model}
                       </p>
                       <p className="font-mono text-[10px] tracking-mono uppercase text-steel3 mt-0.5">
-                        {v.year} · {v.mileage.toLocaleString('en-US')} mi
+                        {v.year}{v.colour ? ` · ${v.colour}` : ''} · {v.mileage.toLocaleString('en-US')} mi
                       </p>
                     </div>
                   </li>
@@ -339,7 +348,7 @@ export default async function HomePage() {
             )}
           </section>
 
-          {/* ── Recent visits ───────────────────────────────────────────── */}
+          {/* ── Activity timeline ───────────────────────────────────────── */}
           <section className="pb-2">
             <div className="flex items-center justify-between mb-3">
               <p className="font-mono text-[9px] tracking-mono2 uppercase text-steel2">
@@ -353,29 +362,36 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            {visits.length > 0 ? (
+            {timeline.length > 0 ? (
               <div className="border border-ink4">
-                {visits.map((v, idx) => {
-                  const svcName = v.service_ids?.[0]
-                    ? (svcMap.get(v.service_ids[0]) ?? '—')
+                {timeline.map((entry, idx) => {
+                  const svcName = entry.service_ids?.[0]
+                    ? (svcMap.get(entry.service_ids[0]) ?? '—')
                     : '—'
+                  const isUpcoming = entry.tag === 'UPCOMING'
                   return (
                     <div
-                      key={v.id}
+                      key={entry.id}
                       className="flex items-center gap-3 px-4 py-3"
                       style={idx > 0 ? { borderTop: '1px solid #2A2F33' } : undefined}
                     >
-                      <span className="font-mono text-[10px] tracking-mono uppercase text-steel3 flex-shrink-0 w-16">
-                        {v.reference}
+                      <span
+                        className="font-mono text-[8px] tracking-mono uppercase px-1.5 py-0.5 leading-none flex-shrink-0"
+                        style={{
+                          background: isUpcoming ? '#F5C518' : '#2A2F33',
+                          color:      isUpcoming ? '#0B0D0E' : '#8B9197',
+                        }}
+                      >
+                        {entry.tag}
+                      </span>
+                      <span className="font-mono text-[10px] tracking-mono uppercase text-steel3 flex-shrink-0 w-14">
+                        {entry.reference}
                       </span>
                       <span className="font-display text-[13px] text-bone flex-1 truncate">
                         {svcName}
                       </span>
                       <span className="font-mono text-[10px] tracking-mono text-steel3 flex-shrink-0">
-                        {smartDate(v.scheduled_start)}
-                      </span>
-                      <span className="font-mono text-[10px] tracking-mono text-bone flex-shrink-0 text-right">
-                        {v.final_cost_mur != null ? formatMUR(v.final_cost_mur) : '—'}
+                        {smartDate(entry.scheduled_start)}
                       </span>
                     </div>
                   )
