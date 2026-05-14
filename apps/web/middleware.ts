@@ -4,7 +4,7 @@ import type { CookieOptions } from '@supabase/ssr'
 
 // ── Route config ──────────────────────────────────────────────────────────────
 
-const PUBLIC_PATHS  = ['/login', '/signup', '/otp', '/forgot']
+const PUBLIC_PATHS  = ['/login', '/signup', '/otp', '/forgot', '/auth']
 const CUSTOMER_PATHS = ['/home', '/book', '/history', '/account']
 const MECHANIC_PATHS = ['/mechanic']
 const ADMIN_PATHS    = ['/admin']
