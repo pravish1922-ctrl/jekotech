@@ -28,7 +28,7 @@ interface Visit {
 
 interface Vehicle {
   id: string
-  registration_number: string
+  registration: string
   make: string
   model: string
   year: number
@@ -55,18 +55,22 @@ function getInitials(name: string): string {
 
 function parseDate(iso: string) {
   const d = new Date(iso)
+  const sameYear = d.getFullYear() === new Date().getFullYear()
   return {
     weekday: d.toLocaleDateString('en-GB', { weekday: 'short' }).toUpperCase(),
     day:     String(d.getDate()),
     month:   d.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase(),
+    year:    sameYear ? null : String(d.getFullYear()),
     time:    d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }),
   }
 }
 
-function formatVisitDate(iso: string): string {
-  return new Date(iso)
-    .toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
-    .toUpperCase()
+function smartDate(iso: string): string {
+  const d = new Date(iso)
+  const sameYear = d.getFullYear() === new Date().getFullYear()
+  return sameYear
+    ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase()
+    : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()
 }
 
 // ── Status pill ───────────────────────────────────────────────────────────────
@@ -124,7 +128,7 @@ export default async function HomePage() {
 
     supabase
       .from('vehicles')
-      .select('id, registration_number, make, model, year, mileage')
+      .select('id, registration, make, model, year, mileage')
       .eq('owner_client_id', user.id)
       .order('created_at', { ascending: false }),
 
@@ -245,6 +249,11 @@ export default async function HomePage() {
                         <span className="font-mono text-[10px] uppercase text-steel3 tracking-mono">
                           {bd.month}
                         </span>
+                        {bd.year && (
+                          <span className="font-mono text-[10px] uppercase text-steel3 tracking-mono">
+                            {bd.year}
+                          </span>
+                        )}
                         <span className="ml-auto font-mono text-[14px] text-bone tracking-mono">
                           {bd.time}
                         </span>
@@ -309,7 +318,7 @@ export default async function HomePage() {
                       style={{ height: 32, border: '1px solid #2A2F33' }}
                     >
                       <span className="font-mono text-[11px] font-bold tracking-mono uppercase text-bone">
-                        {v.registration_number}
+                        {v.registration}
                       </span>
                     </div>
                     <div className="min-w-0">
@@ -363,7 +372,7 @@ export default async function HomePage() {
                         {svcName}
                       </span>
                       <span className="font-mono text-[10px] tracking-mono text-steel3 flex-shrink-0">
-                        {formatVisitDate(v.scheduled_start)}
+                        {smartDate(v.scheduled_start)}
                       </span>
                       <span className="font-mono text-[10px] tracking-mono text-bone flex-shrink-0 text-right">
                         {v.final_cost_mur != null ? formatMUR(v.final_cost_mur) : '—'}

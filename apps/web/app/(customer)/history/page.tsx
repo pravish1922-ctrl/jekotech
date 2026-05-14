@@ -28,10 +28,12 @@ function formatMUR(n: number): string {
   return `₨ ${n.toLocaleString('en-US')}`
 }
 
-function formatKpiDate(iso: string): string {
-  return new Date(iso)
-    .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })
-    .toUpperCase()
+function smartDate(iso: string): string {
+  const d = new Date(iso)
+  const sameYear = d.getFullYear() === new Date().getFullYear()
+  return sameYear
+    ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase()
+    : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -101,7 +103,7 @@ export default async function HistoryPage() {
           {[
             { label: 'VISITS',         value: String(kpi.visits) },
             { label: 'TOTAL SPEND',    value: kpi.spend > 0 ? formatMUR(kpi.spend) : '—' },
-            { label: 'LAST IN',        value: kpi.lastDate ? formatKpiDate(kpi.lastDate) : '—' },
+            { label: 'LAST IN',        value: kpi.lastDate ? smartDate(kpi.lastDate) : '—' },
           ].map(({ label, value }, idx) => (
             <div
               key={label}

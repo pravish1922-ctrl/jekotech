@@ -32,10 +32,12 @@ function formatMUR(n: number): string {
   return `₨ ${n.toLocaleString('en-US')}`
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso)
-    .toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
-    .toUpperCase()
+function smartDate(iso: string): string {
+  const d = new Date(iso)
+  const sameYear = d.getFullYear() === new Date().getFullYear()
+  return sameYear
+    ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase()
+    : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()
 }
 
 function StatusPill({ status }: { status: string }) {
@@ -52,7 +54,11 @@ function StatusPill({ status }: { status: string }) {
 
 function applyFilter(bookings: Booking[], filter: Filter): Booking[] {
   switch (filter) {
-    case 'UPCOMING':  return bookings.filter(b => UPCOMING_STATUSES.has(b.status))
+    case 'UPCOMING':
+      return bookings
+        .filter(b => UPCOMING_STATUSES.has(b.status))
+        .slice()
+        .sort((a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime())
     case 'COMPLETED': return bookings.filter(b => b.status === 'complete')
     case 'CANCELLED': return bookings.filter(b => b.status === 'cancelled')
     default:          return bookings
@@ -129,7 +135,7 @@ export function HistoryList({ bookings, svcMap }: Props) {
                       {svcName}
                     </p>
                     <p className="font-mono text-[10px] tracking-mono uppercase text-steel3">
-                      {formatDate(b.scheduled_start)}
+                      {smartDate(b.scheduled_start)}
                     </p>
                   </div>
 

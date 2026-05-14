@@ -9,20 +9,18 @@ import { BottomNav } from '../../../../components/ui/bottom-nav'
 type BookingStatus = 'pending' | 'confirmed' | 'in_progress' | 'complete' | 'cancelled'
 
 interface BookingRow {
-  id:                 string
-  reference:          string
-  service_ids:        string[]
-  vehicle_id:         string | null
-  bay_number:         number | null
-  scheduled_start:    string
-  scheduled_end:      string | null
-  status:             BookingStatus
+  id:                   string
+  reference:            string
+  service_ids:          string[]
+  vehicle_id:           string | null
+  bay_number:           number | null
+  scheduled_start:      string
+  status:               BookingStatus
   assigned_mechanic_id: string | null
-  customer_notes:     string | null
-  mechanic_notes:     string | null
-  photo_urls:         string[] | null
-  estimated_cost_mur: number
-  final_cost_mur:     number | null
+  customer_notes:       string | null
+  photo_urls:           string[] | null
+  estimated_cost_mur:   number
+  final_cost_mur:       number | null
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -41,8 +39,12 @@ function formatMUR(n: number): string {
 
 function formatDateTime(iso: string): { date: string; time: string } {
   const d = new Date(iso)
+  const sameYear = d.getFullYear() === new Date().getFullYear()
+  const dateStr = sameYear
+    ? d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+    : d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   return {
-    date: d.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }),
+    date: dateStr,
     time: d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }),
   }
 }
@@ -66,7 +68,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
 
   const { data: raw } = await supabase
     .from('bookings')
-    .select('id, reference, service_ids, vehicle_id, bay_number, scheduled_start, scheduled_end, status, assigned_mechanic_id, customer_notes, mechanic_notes, photo_urls, estimated_cost_mur, final_cost_mur')
+    .select('id, reference, service_ids, vehicle_id, bay_number, scheduled_start, status, assigned_mechanic_id, customer_notes, photo_urls, estimated_cost_mur, final_cost_mur')
     .eq('id', params.id)
     .eq('client_id', user.id)
     .single()
@@ -84,7 +86,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
       ? supabase.from('services').select('name_en').eq('id', svcId).single()
       : Promise.resolve(null),
     vehicleId
-      ? supabase.from('vehicles').select('registration_number, make, model, year').eq('id', vehicleId).single()
+      ? supabase.from('vehicles').select('registration, make, model, year').eq('id', vehicleId).single()
       : Promise.resolve(null),
     booking.assigned_mechanic_id
       ? supabase.from('mechanics').select('name').eq('id', booking.assigned_mechanic_id).single()
@@ -92,7 +94,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
   ])
 
   const serviceName  = (svcResult?.data as { name_en: string } | null)?.name_en ?? '—'
-  const vehicle      = vehicleResult?.data as { registration_number: string; make: string; model: string; year: number } | null
+  const vehicle      = vehicleResult?.data as { registration: string; make: string; model: string; year: number } | null
   const mechanicName = (mechResult?.data as { name: string } | null)?.name ?? null
 
   const statusCfg = STATUS_CFG[booking.status] ?? STATUS_CFG.pending
@@ -144,7 +146,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
           {vehicle && (
             <Row
               label="Vehicle"
-              value={`${vehicle.registration_number} — ${vehicle.make} ${vehicle.model} ${vehicle.year}`}
+              value={`${vehicle.registration} · ${vehicle.make} ${vehicle.model} ${vehicle.year}`}
             />
           )}
           {booking.bay_number != null && (
@@ -159,9 +161,6 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
           />
           {booking.customer_notes && (
             <Row label="Your Notes" value={booking.customer_notes} />
-          )}
-          {booking.mechanic_notes && (
-            <Row label="Workshop Notes" value={booking.mechanic_notes} />
           )}
         </div>
 
