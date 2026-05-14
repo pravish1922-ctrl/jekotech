@@ -1,6 +1,7 @@
 import { createServerSupabaseClient as createServerClient } from '../../../../lib/supabase-server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { BottomNav } from '../../../../components/ui/bottom-nav'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -24,6 +25,7 @@ interface BookingRow {
   scheduled_start: string
   status: BookingStatus
   estimated_cost_mur: number
+  photo_urls: string[] | null
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -65,7 +67,7 @@ export default async function VehicleDetailPage({ params }: { params: { vehicleI
 
     supabase
       .from('bookings')
-      .select('id, reference, service_ids, scheduled_start, status, estimated_cost_mur')
+      .select('id, reference, service_ids, scheduled_start, status, estimated_cost_mur, photo_urls')
       .eq('vehicle_id', params.vehicleId)
       .eq('client_id', user.id)
       .order('scheduled_start', { ascending: false }),
@@ -85,6 +87,8 @@ export default async function VehicleDetailPage({ params }: { params: { vehicleI
   const svcMap = new Map<string, string>(
     ((svcRaw as { id: string; name_en: string }[] | null) ?? []).map(s => [s.id, s.name_en])
   )
+
+  const allPhotos = bookings.flatMap(b => b.photo_urls ?? []).filter(Boolean)
 
   return (
     <>
@@ -128,6 +132,35 @@ export default async function VehicleDetailPage({ params }: { params: { vehicleI
             ))}
           </div>
         </div>
+
+        {/* Photo strip */}
+        {allPhotos.length > 0 && (
+          <div className="mb-6">
+            <p className="font-mono text-[9px] tracking-mono2 uppercase text-steel2 mb-3">
+              PHOTOS ({allPhotos.length})
+            </p>
+            <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              {allPhotos.map((url, idx) => (
+                <a
+                  key={idx}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 overflow-hidden bg-ink2 border border-ink4"
+                  style={{ width: 160, height: 160 }}
+                >
+                  <Image
+                    src={url}
+                    alt={`Photo ${idx + 1}`}
+                    width={160}
+                    height={160}
+                    className="w-full h-full object-cover"
+                  />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Service history */}
         <div>

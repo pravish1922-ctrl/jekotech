@@ -13,9 +13,10 @@ interface Vehicle {
   colour: string | null
 }
 
-interface LastServicedRow {
+interface LastBookedRow {
   vehicle_id: string
   scheduled_start: string
+  status: string
 }
 
 function smartDate(iso: string): string {
@@ -32,7 +33,7 @@ export default async function FleetPage() {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) redirect('/login')
 
-  const [{ data: vehiclesRaw }, { data: completedRaw }] = await Promise.all([
+  const [{ data: vehiclesRaw }, { data: bookingsRaw }] = await Promise.all([
     supabase
       .from('vehicles')
       .select('id, registration, make, model, year, mileage, colour')
@@ -41,20 +42,19 @@ export default async function FleetPage() {
 
     supabase
       .from('bookings')
-      .select('vehicle_id, scheduled_start')
+      .select('vehicle_id, scheduled_start, status')
       .eq('client_id', user.id)
-      .eq('status', 'complete')
       .order('scheduled_start', { ascending: false }),
   ])
 
-  const vehicles  = (vehiclesRaw  as Vehicle[]          | null) ?? []
-  const completed = (completedRaw as LastServicedRow[]  | null) ?? []
+  const vehicles    = (vehiclesRaw as Vehicle[]       | null) ?? []
+  const allBookings = (bookingsRaw as LastBookedRow[] | null) ?? []
 
-  // Most recent completed booking date per vehicle (already sorted DESC)
-  const lastServiced = new Map<string, string>()
-  for (const b of completed) {
-    if (b.vehicle_id && !lastServiced.has(b.vehicle_id)) {
-      lastServiced.set(b.vehicle_id, b.scheduled_start)
+  // Most recent booking per vehicle (any status) — array is already sorted DESC
+  const lastBooking = new Map<string, { date: string; status: string }>()
+  for (const b of allBookings) {
+    if (b.vehicle_id && !lastBooking.has(b.vehicle_id)) {
+      lastBooking.set(b.vehicle_id, { date: b.scheduled_start, status: b.status })
     }
   }
 
@@ -88,7 +88,12 @@ export default async function FleetPage() {
           {vehicles.length > 0 ? (
             <ul className="flex flex-col gap-3">
               {vehicles.map(v => {
-                const lastDate = lastServiced.get(v.id)
+                const last      = lastBooking.get(v.id)
+                const lastLabel = last
+                  ? last.status === 'complete'
+                    ? `Last serviced: ${smartDate(last.date)}`
+                    : `Last booked: ${smartDate(last.date)}`
+                  : 'No bookings yet'
                 return (
                   <li key={v.id} className="border border-ink4">
                     <div
@@ -115,7 +120,7 @@ export default async function FleetPage() {
 
                     <div className="flex items-center justify-between px-4 py-3">
                       <span className="font-mono text-[9px] tracking-mono2 uppercase text-steel2">
-                        {lastDate ? `Last serviced: ${smartDate(lastDate)}` : 'No services yet'}
+                        {lastLabel}
                       </span>
                       <Link
                         href={`/fleet/${v.id}`}

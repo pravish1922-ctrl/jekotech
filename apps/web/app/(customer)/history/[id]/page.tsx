@@ -143,12 +143,10 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
               </span>
             }
           />
-          {vehicle && (
-            <Row
-              label="Vehicle"
-              value={`${vehicle.registration} · ${vehicle.make} ${vehicle.model} ${vehicle.year}`}
-            />
-          )}
+          <Row
+            label="Vehicle"
+            value={vehicle ? `${vehicle.registration} · ${vehicle.make} ${vehicle.model} ${vehicle.year}` : '—'}
+          />
           {booking.bay_number != null && (
             <Row label="Bay" value={`BAY ${booking.bay_number}`} />
           )}
