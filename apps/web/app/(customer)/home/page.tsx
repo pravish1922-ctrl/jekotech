@@ -223,9 +223,10 @@ export default async function HomePage() {
                   : 'Service'
 
                 return (
-                  <article
+                  <Link
                     key={booking.id}
-                    className="bg-ink2 border border-ink4 shadow-ticket"
+                    href={`/history/${booking.id}`}
+                    className="block bg-ink2 border border-ink4 shadow-ticket hover:bg-ink3 transition-colors duration-120"
                     aria-label={`Booking ${booking.reference}`}
                   >
                     <div
@@ -276,7 +277,7 @@ export default async function HomePage() {
                         </span>
                       )}
                     </div>
-                  </article>
+                  </Link>
                 )
               })}
             </div>
