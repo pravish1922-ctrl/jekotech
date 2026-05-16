@@ -78,7 +78,10 @@ export function BookingDetailEditor({
 
   const canEdit = currentRole === 'owner' || currentRole === 'delegate'
   const canConfirmOnly = currentRole === 'staff'
-  const nextStatuses = STATUS_FLOW[status]
+  const allNextStatuses = STATUS_FLOW[status]
+  const nextStatuses = canEdit
+    ? allNextStatuses
+    : allNextStatuses.filter(s => s === 'confirmed' || s === 'cancelled')
 
   async function handleSave() {
     setSaving(true)
