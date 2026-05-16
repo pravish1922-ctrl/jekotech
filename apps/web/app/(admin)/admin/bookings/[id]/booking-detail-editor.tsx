@@ -105,9 +105,7 @@ export function BookingDetailEditor({
     if (err) {
       setError(err.message)
     } else {
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-      router.refresh()
+      router.push('/admin/bookings')
     }
   }
 

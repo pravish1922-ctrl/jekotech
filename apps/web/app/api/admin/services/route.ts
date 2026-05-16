@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
     .from('services')
     .insert({
       name_en,
+      type:                   name_en.toLowerCase().replace(/\s+/g, '_'),
       base_price_mur:         body.base_price_mur ?? 0,
       estimated_duration_min: body.estimated_duration_min ?? 60,
       active: true,

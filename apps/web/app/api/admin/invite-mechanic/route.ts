@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
   const { error: mechErr } = await db
     .from('mechanics')
-    .upsert({ id: clientId, name, email, phone, active: true })
+    .upsert({ id: clientId, name, phone, active: true })
   if (mechErr) return NextResponse.json({ error: mechErr.message }, { status: 500 })
 
   return NextResponse.json({ success: true })
