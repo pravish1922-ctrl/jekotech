@@ -3,86 +3,97 @@
 -- Run once via Supabase SQL editor.
 -- ============================================================
 
--- ── 1. Add 'staff' to clients role check ─────────────────────────────────────
-alter table public.clients
-  drop constraint if exists clients_role_check;
+-- 1. Add 'staff' to clients role check
+ALTER TABLE public.clients
+DROP CONSTRAINT IF EXISTS clients_role_check;
 
-alter table public.clients
-  add constraint clients_role_check
-  check (role in ('customer', 'mechanic', 'owner', 'delegate', 'staff'));
+ALTER TABLE public.clients
+ADD CONSTRAINT clients_role_check
+CHECK (role IN ('customer', 'mechanic', 'owner', 'delegate', 'staff'));
 
--- ── 2. Add mechanic_notes to bookings ────────────────────────────────────────
-alter table public.bookings
-  add column if not exists mechanic_notes text;
+-- 2. Add mechanic_notes to bookings
+ALTER TABLE public.bookings
+ADD COLUMN IF NOT EXISTS mechanic_notes text;
 
--- ── 3. Admin RLS — staff can read all bookings ────────────────────────────────
-drop policy if exists "bookings: staff read all" on public.bookings;
-create policy "bookings: staff read all"
-  on public.bookings for select
-  using (
-    exists (
-      select 1 from public.clients c
-      where c.id = auth.uid()
-        and c.role in ('owner', 'delegate', 'staff')
-    )
-  );
+-- 3. Admin RLS — staff can read all bookings
+DROP POLICY IF EXISTS "bookings: staff read all" ON public.bookings;
 
--- ── 4. Admin RLS — owner/delegate can update any booking ─────────────────────
-drop policy if exists "bookings: owner delegate update all" on public.bookings;
-create policy "bookings: owner delegate update all"
-  on public.bookings for update
-  using (
-    exists (
-      select 1 from public.clients c
-      where c.id = auth.uid()
-        and c.role in ('owner', 'delegate')
-    )
-  );
+CREATE POLICY "bookings: staff read all"
+ON public.bookings FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM public.clients c
+    WHERE c.id = auth.uid()
+    AND c.role IN ('owner', 'delegate', 'staff')
+  )
+);
 
--- ── 5. Staff RLS — staff can update status on bookings (limited fields) ───────
-drop policy if exists "bookings: staff update status" on public.bookings;
-create policy "bookings: staff update status"
-  on public.bookings for update
-  using (
-    exists (
-      select 1 from public.clients c
-      where c.id = auth.uid()
-        and c.role = 'staff'
-    )
-  );
+-- 4. Admin RLS — owner/delegate can update all bookings
+DROP POLICY IF EXISTS "bookings: admin update all" ON public.bookings;
 
--- ── 6. Mechanic RLS — mechanic can update their assigned bookings ─────────────
-drop policy if exists "bookings: mechanic update assigned" on public.bookings;
-create policy "bookings: mechanic update assigned"
-  on public.bookings for update
-  using (
-    exists (
-      select 1 from public.mechanics m
-      where m.id = assigned_mechanic_id
-        and m.client_id = auth.uid()
-    )
-  );
+CREATE POLICY "bookings: admin update all"
+ON public.bookings FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM public.clients c
+    WHERE c.id = auth.uid()
+    AND c.role IN ('owner', 'delegate')
+  )
+);
 
--- ── 7. Ensure admin read-all policy exists (replaces existing if needed) ──────
-drop policy if exists "bookings: admin all" on public.bookings;
-create policy "bookings: admin all"
-  on public.bookings for all
-  using (
-    exists (
-      select 1 from public.clients c
-      where c.id = auth.uid()
-        and c.role in ('owner', 'delegate')
-    )
-  );
+-- 5. Mechanic RLS — see and update assigned bookings
+DROP POLICY IF EXISTS "bookings: mechanic select assigned" ON public.bookings;
+DROP POLICY IF EXISTS "bookings: mechanic update assigned" ON public.bookings;
 
--- ── 8. Vehicles — allow admin/staff to read all vehicles ─────────────────────
-drop policy if exists "vehicles: staff read all" on public.vehicles;
-create policy "vehicles: staff read all"
-  on public.vehicles for select
-  using (
-    exists (
-      select 1 from public.clients c
-      where c.id = auth.uid()
-        and c.role in ('owner', 'delegate', 'staff')
-    )
-  );
+CREATE POLICY "bookings: mechanic select assigned"
+ON public.bookings FOR SELECT
+USING (assigned_mechanic_id = auth.uid());
+
+CREATE POLICY "bookings: mechanic update assigned"
+ON public.bookings FOR UPDATE
+USING (assigned_mechanic_id = auth.uid());
+
+-- 6. Mechanics table
+CREATE TABLE IF NOT EXISTS public.mechanics (
+  id uuid PRIMARY KEY REFERENCES public.clients(id),
+  name text NOT NULL,
+  email text UNIQUE NOT NULL,
+  phone text,
+  active boolean DEFAULT true,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.mechanics ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "admin_select_mechanics" ON public.mechanics;
+DROP POLICY IF EXISTS "owner_manage_mechanics" ON public.mechanics;
+DROP POLICY IF EXISTS "mechanic_select_own" ON public.mechanics;
+
+CREATE POLICY "admin_select_mechanics" ON public.mechanics
+FOR SELECT TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.clients c
+    WHERE c.id = auth.uid()
+    AND c.role IN ('owner', 'delegate', 'staff')
+  )
+);
+
+CREATE POLICY "owner_manage_mechanics" ON public.mechanics
+FOR ALL TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.clients c
+    WHERE c.id = auth.uid()
+    AND c.role = 'owner'
+  )
+);
+
+CREATE POLICY "mechanic_select_own" ON public.mechanics
+FOR SELECT TO authenticated
+USING (id = auth.uid());
+
+-- 7. Set pravish as owner for testing
+UPDATE public.clients
+SET role = 'owner'
+WHERE email = 'pravish1922@gmail.com';
