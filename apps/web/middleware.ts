@@ -116,10 +116,10 @@ async function getClientRole(
 function roleHome(role: string | null): string {
   switch (role) {
     case 'owner':
-    case 'delegate':  return '/admin'
-    case 'staff':     return '/admin/bookings'
-    case 'mechanic':  return '/mechanic/jobs'
-    default:          return '/home'
+    case 'delegate':
+    case 'staff':    return '/admin/bookings'
+    case 'mechanic': return '/mechanic/jobs'
+    default:         return '/home'
   }
 }
 
