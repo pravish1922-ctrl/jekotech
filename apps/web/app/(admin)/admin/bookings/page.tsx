@@ -1,8 +1,15 @@
-import { createServerSupabaseClient as createServerClient } from '../../../../lib/supabase-server'
+import { createClient } from '@supabase/supabase-js'
 import { AdminBookingsList } from './admin-bookings-list'
 
+function serviceDb() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
+  )
+}
+
 export default async function AdminBookingsPage() {
-  const supabase = createServerClient()
+  const supabase = serviceDb()
 
   const { data: bookings, error } = await supabase
     .from('bookings')

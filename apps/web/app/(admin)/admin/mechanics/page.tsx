@@ -1,10 +1,20 @@
-import { createServerSupabaseClient as createServerClient } from '../../../../lib/supabase-server'
+import { createClient } from '@supabase/supabase-js'
+import { createServerSupabaseClient } from '../../../../lib/supabase-server'
 import { MechanicsClient } from './mechanics-client'
 
-export default async function AdminMechanicsPage() {
-  const supabase = createServerClient()
+function serviceDb() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
+  )
+}
 
-  const { data: { user } } = await supabase.auth.getUser()
+export default async function AdminMechanicsPage() {
+  const authClient = createServerSupabaseClient()
+  const { data: { user } } = await authClient.auth.getUser()
+
+  const supabase = serviceDb()
+
   const { data: currentClient } = user
     ? await supabase.from('clients').select('role').eq('id', user.id).single()
     : { data: null }
@@ -17,7 +27,6 @@ export default async function AdminMechanicsPage() {
 
   const rows = mechanics ?? []
 
-  // Count assigned jobs per mechanic
   const mechanicIds = rows.map(m => m.id)
   const { data: jobCounts } = mechanicIds.length
     ? await supabase

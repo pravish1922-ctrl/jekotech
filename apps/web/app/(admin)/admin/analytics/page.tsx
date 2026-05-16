@@ -1,12 +1,10 @@
-import { createServerSupabaseClient as createServerClient } from '../../../../lib/supabase-server'
+import { createClient } from '@supabase/supabase-js'
 
-function smartDate(iso: string) {
-  const d = new Date(iso)
-  const now = new Date()
-  const day = d.getDate()
-  const mon = d.toLocaleString('en-GB', { month: 'short' }).toUpperCase()
-  if (d.getFullYear() === now.getFullYear()) return `${day} ${mon}`
-  return `${day} ${mon} ${d.getFullYear()}`
+function serviceDb() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
+  )
 }
 
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
@@ -18,7 +16,7 @@ const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
 }
 
 export default async function AdminAnalyticsPage() {
-  const supabase = createServerClient()
+  const supabase = serviceDb()
 
   const { data: bookings } = await supabase
     .from('bookings')
@@ -28,9 +26,9 @@ export default async function AdminAnalyticsPage() {
   const rows = bookings ?? []
 
   // KPIs
-  const totalRevenue = rows.reduce((s, b) => s + (b.final_cost_mur ?? 0), 0)
-  const totalBookings = rows.length
-  const pendingCount = rows.filter(b => b.status === 'pending').length
+  const totalRevenue   = rows.reduce((s, b) => s + (b.final_cost_mur ?? 0), 0)
+  const totalBookings  = rows.length
+  const pendingCount   = rows.filter(b => b.status === 'pending').length
   const completedCount = rows.filter(b => b.status === 'completed').length
 
   // Revenue by service
@@ -48,10 +46,10 @@ export default async function AdminAnalyticsPage() {
     for (const sid of b.service_ids) {
       if (!revenueByService[sid]) revenueByService[sid] = { name: serviceMap[sid] ?? sid, revenue: 0, count: 0 }
       revenueByService[sid].revenue += perSvc
-      revenueByService[sid].count += 1
+      revenueByService[sid].count   += 1
     }
   }
-  const topServices = Object.values(revenueByService).sort((a, b) => b.revenue - a.revenue).slice(0, 6)
+  const topServices   = Object.values(revenueByService).sort((a, b) => b.revenue - a.revenue).slice(0, 6)
   const maxSvcRevenue = topServices[0]?.revenue ?? 1
 
   // Bookings per day — last 14 days
@@ -75,7 +73,7 @@ export default async function AdminAnalyticsPage() {
   const maxDay = Math.max(...days.map(d => d.count), 1)
 
   // Client names for recent activity
-  const recentRows = rows.slice(0, 10)
+  const recentRows      = rows.slice(0, 10)
   const recentClientIds = [...new Set(recentRows.map(b => b.client_id).filter(Boolean))]
   const { data: clients } = recentClientIds.length
     ? await supabase.from('clients').select('id, name').in('id', recentClientIds)
@@ -84,7 +82,6 @@ export default async function AdminAnalyticsPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#0B0D0E', paddingBottom: 80 }}>
-      {/* Header */}
       <div className="px-6 py-5" style={{ borderBottom: '1px solid #2A2F33' }}>
         <h1 className="text-xl font-bold" style={{ color: '#F2EFEA', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '-0.02em' }}>
           ANALYTICS
@@ -99,10 +96,10 @@ export default async function AdminAnalyticsPage() {
         {/* KPI Cards */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: 'TOTAL REVENUE', value: `₨${totalRevenue.toLocaleString()}`, accent: '#2F9E5A' },
-            { label: 'TOTAL BOOKINGS', value: totalBookings.toString(), accent: '#3B82F6' },
-            { label: 'PENDING', value: pendingCount.toString(), accent: '#F5C518' },
-            { label: 'COMPLETED', value: completedCount.toString(), accent: '#FF5A1F' },
+            { label: 'TOTAL REVENUE',  value: `₨${totalRevenue.toLocaleString()}`, accent: '#2F9E5A' },
+            { label: 'TOTAL BOOKINGS', value: totalBookings.toString(),             accent: '#3B82F6' },
+            { label: 'PENDING',        value: pendingCount.toString(),              accent: '#F5C518' },
+            { label: 'COMPLETED',      value: completedCount.toString(),            accent: '#FF5A1F' },
           ].map(({ label, value, accent }) => (
             <div key={label} className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33', boxShadow: '4px 4px 0 #0B0D0E' }}>
               <p className="text-[10px] font-bold mb-1" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>
@@ -115,23 +112,22 @@ export default async function AdminAnalyticsPage() {
           ))}
         </div>
 
-        {/* Bookings per day — 14-day bar chart */}
+        {/* 14-day bar chart */}
         <div className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33', boxShadow: '4px 4px 0 #0B0D0E' }}>
           <h2 className="text-[10px] font-bold mb-4" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>
             BOOKINGS · LAST 14 DAYS
           </h2>
           <div className="flex items-end gap-1" style={{ height: 80 }}>
             {days.map(d => {
-              const pct = maxDay === 0 ? 0 : Math.round((d.count / maxDay) * 100)
+              const pct = Math.round((d.count / maxDay) * 100)
               return (
-                <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
+                <div key={d.date} className="flex-1 flex flex-col items-center">
                   <div
                     style={{
                       width: '100%',
                       height: `${Math.max(pct, d.count > 0 ? 4 : 2)}%`,
                       minHeight: d.count > 0 ? 4 : 2,
                       background: d.count > 0 ? '#FF5A1F' : '#2A2F33',
-                      flexShrink: 0,
                     }}
                   />
                 </div>

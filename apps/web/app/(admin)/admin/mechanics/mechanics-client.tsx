@@ -39,46 +39,26 @@ export function MechanicsClient({ mechanics: initial, isOwner }: Props) {
     setInviting(true)
     setInviteError(null)
 
-    const { data: existing } = await supabase
-      .from('clients')
-      .select('id')
-      .eq('email', inviteEmail.trim())
-      .single()
-
-    let clientId: string | null = null
-
-    if (existing) {
-      clientId = existing.id
-      const { error } = await supabase
-        .from('clients')
-        .update({ role: 'mechanic', name: inviteName.trim() })
-        .eq('id', clientId)
-      if (error) { setInviteError(error.message); setInviting(false); return }
-    } else {
-      const { data: newClient, error } = await supabase
-        .from('clients')
-        .insert({ email: inviteEmail.trim(), name: inviteName.trim(), role: 'mechanic' })
-        .select('id')
-        .single()
-      if (error || !newClient) { setInviteError(error?.message ?? 'Failed to create client'); setInviting(false); return }
-      clientId = newClient.id
-    }
-
-    const { error: mechErr } = await supabase
-      .from('mechanics')
-      .upsert({
-        id: clientId,
-        name: inviteName.trim(),
+    const res = await fetch('/api/admin/invite-mechanic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name:  inviteName.trim(),
         email: inviteEmail.trim(),
         phone: invitePhone.trim() || null,
-        active: true,
-      })
-    if (mechErr) { setInviteError(mechErr.message); setInviting(false); return }
+      }),
+    })
+    const json = await res.json() as { success?: boolean; error?: string }
+
+    setInviting(false)
+    if (!res.ok || json.error) {
+      setInviteError(json.error ?? 'Failed to add mechanic')
+      return
+    }
 
     setInviteName('')
     setInviteEmail('')
     setInvitePhone('')
-    setInviting(false)
     setInviteSuccess(true)
     setTimeout(() => setInviteSuccess(false), 2000)
     router.refresh()
@@ -99,7 +79,6 @@ export function MechanicsClient({ mechanics: initial, isOwner }: Props) {
   return (
     <div className="px-6 mt-4 flex flex-col gap-4 max-w-lg">
 
-      {/* Mechanic list */}
       <div className="flex flex-col gap-2">
         {mechanics.length === 0 && (
           <p className="text-center py-16 text-sm" style={{ color: '#F2EFEA33', fontFamily: 'JetBrains Mono, monospace' }}>
@@ -154,46 +133,29 @@ export function MechanicsClient({ mechanics: initial, isOwner }: Props) {
         ))}
       </div>
 
-      {/* Owner-only invite form */}
       {isOwner && (
         <div className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33', boxShadow: '4px 4px 0 #0B0D0E' }}>
           <h2 className="text-[10px] font-bold mb-3" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>
             ADD MECHANIC
           </h2>
           <div className="flex flex-col gap-2">
-            <div>
-              <p className="text-[10px] font-bold mb-1" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>NAME</p>
-              <input
-                type="text"
-                value={inviteName}
-                onChange={e => setInviteName(e.target.value)}
-                className="w-full px-3 py-2 text-sm outline-none"
-                style={{ background: '#1E2225', border: '1px solid #2A2F33', color: '#F2EFEA', fontFamily: 'Inter, sans-serif' }}
-                placeholder="Full name"
-              />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold mb-1" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>EMAIL</p>
-              <input
-                type="email"
-                value={inviteEmail}
-                onChange={e => setInviteEmail(e.target.value)}
-                className="w-full px-3 py-2 text-sm outline-none"
-                style={{ background: '#1E2225', border: '1px solid #2A2F33', color: '#F2EFEA', fontFamily: 'Inter, sans-serif' }}
-                placeholder="mechanic@example.com"
-              />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold mb-1" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>PHONE (optional)</p>
-              <input
-                type="tel"
-                value={invitePhone}
-                onChange={e => setInvitePhone(e.target.value)}
-                className="w-full px-3 py-2 text-sm outline-none"
-                style={{ background: '#1E2225', border: '1px solid #2A2F33', color: '#F2EFEA', fontFamily: 'JetBrains Mono, monospace' }}
-                placeholder="+230 5xxx xxxx"
-              />
-            </div>
+            {[
+              { label: 'NAME', value: inviteName, setter: setInviteName, type: 'text', placeholder: 'Full name', mono: false },
+              { label: 'EMAIL', value: inviteEmail, setter: setInviteEmail, type: 'email', placeholder: 'mechanic@example.com', mono: false },
+              { label: 'PHONE (optional)', value: invitePhone, setter: setInvitePhone, type: 'tel', placeholder: '+230 5xxx xxxx', mono: true },
+            ].map(({ label, value, setter, type, placeholder, mono }) => (
+              <div key={label}>
+                <p className="text-[10px] font-bold mb-1" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>{label}</p>
+                <input
+                  type={type}
+                  value={value}
+                  onChange={e => setter(e.target.value)}
+                  className="w-full px-3 py-2 text-sm outline-none"
+                  style={{ background: '#1E2225', border: '1px solid #2A2F33', color: '#F2EFEA', fontFamily: mono ? 'JetBrains Mono, monospace' : 'Inter, sans-serif' }}
+                  placeholder={placeholder}
+                />
+              </div>
+            ))}
             {inviteError && (
               <p className="text-xs" style={{ color: '#E8412B', fontFamily: 'JetBrains Mono, monospace' }}>ERROR: {inviteError}</p>
             )}

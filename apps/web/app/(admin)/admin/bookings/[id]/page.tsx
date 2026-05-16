@@ -1,9 +1,21 @@
-import { createServerSupabaseClient as createServerClient } from '../../../../../lib/supabase-server'
+import { createClient } from '@supabase/supabase-js'
+import { createServerSupabaseClient } from '../../../../../lib/supabase-server'
 import { notFound } from 'next/navigation'
 import { BookingDetailEditor } from './booking-detail-editor'
 
+function serviceDb() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
+  )
+}
+
 export default async function AdminBookingDetailPage({ params }: { params: { id: string } }) {
-  const supabase = createServerClient()
+  const authClient = createServerSupabaseClient()
+  const { data: { user } } = await authClient.auth.getUser()
+  if (!user) notFound()
+
+  const supabase = serviceDb()
 
   const { data: booking, error } = await supabase
     .from('bookings')
@@ -13,32 +25,19 @@ export default async function AdminBookingDetailPage({ params }: { params: { id:
 
   if (error || !booking) notFound()
 
-  const { data: client } = await supabase
-    .from('clients')
-    .select('id, name, email, phone')
-    .eq('id', booking.client_id)
-    .single()
-
-  const { data: vehicle } = await supabase
-    .from('vehicles')
-    .select('id, registration, make, model, year, colour, mileage')
-    .eq('id', booking.vehicle_id)
-    .single()
-
-  const { data: services } = await supabase
-    .from('services')
-    .select('id, name_en, base_price_mur, estimated_duration_min')
-
-  const { data: mechanics } = await supabase
-    .from('mechanics')
-    .select('id, name')
-
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: currentClient } = await supabase
-    .from('clients')
-    .select('role')
-    .eq('id', user!.id)
-    .single()
+  const [
+    { data: client },
+    { data: vehicle },
+    { data: services },
+    { data: mechanics },
+    { data: currentClient },
+  ] = await Promise.all([
+    supabase.from('clients').select('id, name, email, phone').eq('id', booking.client_id).single(),
+    supabase.from('vehicles').select('id, registration, make, model, year, colour, mileage').eq('id', booking.vehicle_id).single(),
+    supabase.from('services').select('id, name_en, base_price_mur, estimated_duration_min'),
+    supabase.from('mechanics').select('id, name'),
+    supabase.from('clients').select('role').eq('id', user.id).single(),
+  ])
 
   const serviceMap = Object.fromEntries((services ?? []).map(s => [s.id, s]))
   const bookingServices = (booking.service_ids ?? []).map((id: string) => serviceMap[id]).filter(Boolean)
