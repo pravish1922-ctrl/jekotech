@@ -10,7 +10,7 @@ const MECHANIC_PATHS = ['/mechanic']
 const ADMIN_PATHS    = ['/admin']
 
 // Roles allowed for each protected area
-const ADMIN_ROLES    = new Set(['owner', 'delegate'])
+const ADMIN_ROLES    = new Set(['owner', 'delegate', 'staff'])
 const MECHANIC_ROLES = new Set(['mechanic'])
 
 // ── Middleware ────────────────────────────────────────────────────────────────
@@ -117,7 +117,8 @@ function roleHome(role: string | null): string {
   switch (role) {
     case 'owner':
     case 'delegate':  return '/admin'
-    case 'mechanic':  return '/mechanic/dashboard'
+    case 'staff':     return '/admin'
+    case 'mechanic':  return '/mechanic'
     default:          return '/home'
   }
 }
