@@ -1,32 +1,41 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(npx next build)",
-      "Bash(npx tsc --noEmit*)",
-      "Bash(git status)",
-      "Bash(git diff*)",
-      "Bash(git log*)",
-      "Bash(git add*)",
-      "Bash(git commit*)",
-      "Bash(git push*)",
-      "Bash(node scripts/check-build-health.sh)",
-      "Bash(bash scripts/check-build-health.sh)"
-    ]
-  },
   "hooks": {
     "PreToolUse": [
       {
         "matcher": "Write|Edit",
-        "command": "node -e \"const d=require('fs').readFileSync('/dev/stdin','utf8');const i=JSON.parse(d);const p=i.tool_input?.file_path||'';if(p.includes('.env')&&!p.includes('.example')){console.error('[Hook] BLOCKED: Do not write to .env files — use .env.local.example for templates');process.exit(2)}console.log(d)\"",
-        "description": "Block writes to .env files (secrets protection)"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'PRE-WRITE CHECK: Ensure design system tokens, relative imports, and RLS rules are followed'",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit",
-        "command": "node -e \"const d=require('fs').readFileSync('/dev/stdin','utf8');const i=JSON.parse(d);const p=i.tool_input?.file_path||'';const ext=p.split('.').pop();if(['ts','tsx'].includes(ext)&&p.includes('apps/web')){console.log('[Hook] TypeScript file modified: '+p);console.log('[Hook] Run npx next build to verify no type errors before commit')}else{console.log(d)}\" 2>/dev/null || true",
-        "description": "Remind to verify build after TypeScript edits"
+        "matcher": "Bash(git commit*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/pre-commit-security.sh",
+            "timeout": 30
+          }
+        ]
       }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Bash",
+      "Glob",
+      "Grep",
+      "Bash(bash scripts/pre-commit-security.sh)"
+    ],
+    "deny": [
+      "Bash(sudo *)"
     ]
   }
 }

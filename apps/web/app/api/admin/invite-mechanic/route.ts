@@ -10,7 +10,7 @@ function serviceDb() {
 }
 
 export async function POST(request: NextRequest) {
-  // Verify caller is an authenticated admin
+  // Verify caller is an authenticated owner
   const authClient = createServerSupabaseClient()
   const { data: { user } } = await authClient.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -33,34 +33,50 @@ export async function POST(request: NextRequest) {
   // Check if a client with this email already exists
   const { data: existing } = await db
     .from('clients')
-    .select('id')
+    .select('id, role')
     .eq('email', email)
     .maybeSingle()
 
-  let clientId: string
-
   if (existing) {
-    clientId = existing.id
-    const { error } = await db
-      .from('clients')
-      .update({ role: 'mechanic', name })
-      .eq('id', clientId)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  } else {
-    const { data: newClient, error } = await db
-      .from('clients')
-      .insert({ email, name, role: 'mechanic', whatsapp_opt_in: false })
-      .select('id')
-      .single()
-    if (error || !newClient) {
-      return NextResponse.json({ error: error?.message ?? 'Failed to create client' }, { status: 500 })
-    }
-    clientId = newClient.id
+    return NextResponse.json(
+      { error: `A user with email ${email} already exists (role: ${existing.role}). Remove them first or use a different email.` },
+      { status: 409 }
+    )
   }
 
+  // Create new client record with role='mechanic'
+  const { data: newClient, error: clientErr } = await db
+    .from('clients')
+    .insert({ email, name, role: 'mechanic', whatsapp_opt_in: false })
+    .select('id')
+    .single()
+
+  if (clientErr || !newClient) {
+    return NextResponse.json(
+      { error: clientErr?.message ?? 'Failed to create client record' },
+      { status: 500 }
+    )
+  }
+
+  // Check if a mechanics row already exists for this client
+  const { data: existingMech } = await db
+    .from('mechanics')
+    .select('id')
+    .eq('id', newClient.id)
+    .maybeSingle()
+
+  if (existingMech) {
+    return NextResponse.json(
+      { error: 'This person is already registered as a mechanic.' },
+      { status: 409 }
+    )
+  }
+
+  // Insert mechanics row — only { id, name, phone, active: true }, no email column
   const { error: mechErr } = await db
     .from('mechanics')
-    .upsert({ id: clientId, name, phone, active: true })
+    .insert({ id: newClient.id, name, phone, active: true })
+
   if (mechErr) return NextResponse.json({ error: mechErr.message }, { status: 500 })
 
   return NextResponse.json({ success: true })
