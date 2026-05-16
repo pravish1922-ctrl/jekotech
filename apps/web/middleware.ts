@@ -117,8 +117,8 @@ function roleHome(role: string | null): string {
   switch (role) {
     case 'owner':
     case 'delegate':  return '/admin'
-    case 'staff':     return '/admin'
-    case 'mechanic':  return '/mechanic'
+    case 'staff':     return '/admin/bookings'
+    case 'mechanic':  return '/mechanic/jobs'
     default:          return '/home'
   }
 }

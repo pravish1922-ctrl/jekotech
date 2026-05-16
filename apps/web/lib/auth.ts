@@ -4,9 +4,9 @@ export type UserRole = 'customer' | 'mechanic' | 'owner' | 'delegate'
 
 const ROLE_PATHS: Record<UserRole, string> = {
   customer:  '/home',
-  mechanic:  '/mechanic/dashboard',
-  owner:     '/admin',
-  delegate:  '/admin',
+  mechanic:  '/mechanic/jobs',
+  owner:     '/admin/bookings',
+  delegate:  '/admin/bookings',
 }
 
 // ── getRole ───────────────────────────────────────────────────────────────────

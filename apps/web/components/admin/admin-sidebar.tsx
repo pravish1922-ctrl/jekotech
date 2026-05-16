@@ -1,8 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { createBrowserSupabaseClient } from '../../lib/supabase-browser'
+import { usePathname } from 'next/navigation'
 
 type AdminRole = 'owner' | 'delegate' | 'staff'
 
@@ -12,158 +11,188 @@ interface AdminSidebarProps {
   initials: string
 }
 
-const ROLE_BADGE: Record<AdminRole, { bg: string; color: string; label: string }> = {
-  owner:    { bg: '#FF5A1F', color: '#FFFFFF', label: 'OWNER' },
-  delegate: { bg: '#F5C518', color: '#0B0D0E', label: 'DELEGATE' },
-  staff:    { bg: '#2A2F33', color: '#8B9197', label: 'STAFF' },
-}
+const NAV = [
+  { href: '/admin/bookings', label: 'Bookings', icon: BookingsIcon, roles: ['owner', 'delegate', 'staff'] },
+  { href: '/admin/analytics', label: 'Analytics', icon: AnalyticsIcon, roles: ['owner', 'delegate'] },
+  { href: '/admin/mechanics', label: 'Mechanics', icon: MechanicsIcon, roles: ['owner', 'delegate'] },
+  { href: '/admin/settings', label: 'Settings', icon: SettingsIcon, roles: ['owner'] },
+]
 
-interface NavItem {
-  label: string
-  href: string
-}
-
-function getNavItems(role: AdminRole): NavItem[] {
-  const items: NavItem[] = [{ label: 'BOOKINGS', href: '/admin/bookings' }]
-  if (role === 'owner' || role === 'delegate') {
-    items.push({ label: 'MECHANICS', href: '/admin/mechanics' })
-  }
-  if (role === 'owner') {
-    items.push({ label: 'SETTINGS', href: '/admin/settings' })
-  }
-  return items
+const ROLE_BADGE: Record<AdminRole, { label: string; bg: string; color: string }> = {
+  owner:    { label: 'Owner',    bg: '#FF5A1F', color: '#fff' },
+  delegate: { label: 'Delegate', bg: '#F5C518', color: '#0B0D0E' },
+  staff:    { label: 'Staff',    bg: '#2A2F33', color: '#F2EFEA' },
 }
 
 export function AdminSidebar({ role, userName, initials }: AdminSidebarProps) {
   const pathname = usePathname()
-  const router   = useRouter()
-  const badge    = ROLE_BADGE[role]
-  const navItems = getNavItems(role)
-
-  async function handleSignOut() {
-    const supabase = createBrowserSupabaseClient()
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
+  const badge = ROLE_BADGE[role]
+  const visibleNav = NAV.filter(n => n.roles.includes(role))
 
   return (
     <>
-      {/* ── Desktop sidebar ─────────────────────────────────────────────── */}
-      <aside
-        className="hidden md:flex flex-col fixed top-0 left-0 h-full bg-ink2 flex-shrink-0"
-        style={{ width: 240, borderRight: '1px solid #2A2F33', zIndex: 40 }}
-      >
-        {/* Logo */}
-        <div className="px-6 pt-8 pb-6" style={{ borderBottom: '1px solid #2A2F33' }}>
-          <span className="font-display text-[20px] font-bold text-bone tracking-tighter">
-            JK
-          </span>
-          <span className="font-mono text-[8px] tracking-mono2 uppercase text-steel2 ml-2">
-            GARAGE
-          </span>
-        </div>
-
-        {/* User info */}
-        <div className="px-6 py-5" style={{ borderBottom: '1px solid #2A2F33' }}>
-          <div
-            className="rounded-full flex items-center justify-center mb-3 flex-shrink-0"
-            style={{ width: 36, height: 36, background: '#2A2F33' }}
-          >
-            <span className="font-display font-bold text-[12px] text-bone select-none">
-              {initials}
-            </span>
-          </div>
-          <p className="font-display font-semibold text-[13px] text-bone leading-tight truncate">
-            {userName}
-          </p>
-          <span
-            className="font-mono text-[8px] tracking-mono2 uppercase px-1.5 py-0.5 leading-none inline-block mt-1.5"
-            style={{ background: badge.bg, color: badge.color }}
-          >
-            {badge.label}
-          </span>
-        </div>
-
-        {/* Nav */}
-        <nav className="flex-1 py-4">
-          {navItems.map(item => {
-            const isActive = pathname.startsWith(item.href)
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center gap-3 px-6 py-3 transition-colors duration-120"
-                style={{
-                  color:      isActive ? '#FF5A1F' : '#5C6369',
-                  background: isActive ? '#1E2225' : 'transparent',
-                  borderLeft: isActive ? '2px solid #FF5A1F' : '2px solid transparent',
-                }}
-              >
-                <span className="font-mono text-[10px] tracking-mono2 uppercase">
-                  {item.label}
-                </span>
-              </Link>
-            )
-          })}
-        </nav>
-
-        {/* Sign out */}
-        <div className="px-6 py-5" style={{ borderTop: '1px solid #2A2F33' }}>
-          <button
-            onClick={handleSignOut}
-            className="font-mono text-[9px] tracking-mono2 uppercase text-steel2 hover:text-bone transition-colors duration-120"
-          >
-            SIGN OUT
-          </button>
-        </div>
-      </aside>
-
-      {/* ── Mobile top bar ──────────────────────────────────────────────── */}
+      {/* ── Mobile top bar ─────────────────────────────────────────── */}
       <header
-        className="flex md:hidden fixed top-0 left-0 right-0 items-center justify-between px-4 bg-ink2"
-        style={{ height: 52, borderBottom: '1px solid #2A2F33', zIndex: 40 }}
+        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4"
+        style={{ height: 52, background: '#15181A', borderBottom: '1px solid #2A2F33' }}
       >
-        <span className="font-display text-[18px] font-bold text-bone tracking-tighter">
-          JK
-        </span>
-        <span
-          className="font-mono text-[8px] tracking-mono2 uppercase px-1.5 py-0.5 leading-none"
-          style={{ background: badge.bg, color: badge.color }}
-        >
-          {badge.label}
-        </span>
-        <button
-          onClick={handleSignOut}
-          className="font-mono text-[9px] tracking-mono2 uppercase text-steel2"
-        >
-          OUT
-        </button>
+        <JKMark />
+        <div className="flex items-center gap-2">
+          <span
+            className="text-xs font-bold px-2 py-0.5"
+            style={{ background: badge.bg, color: badge.color, fontFamily: 'JetBrains Mono, monospace' }}
+          >
+            {badge.label.toUpperCase()}
+          </span>
+          <div
+            className="w-8 h-8 flex items-center justify-center text-xs font-bold"
+            style={{ background: '#FF5A1F', color: '#fff', fontFamily: 'JetBrains Mono, monospace' }}
+          >
+            {initials}
+          </div>
+        </div>
       </header>
 
-      {/* ── Mobile bottom nav ───────────────────────────────────────────── */}
+      {/* ── Mobile bottom nav ──────────────────────────────────────── */}
       <nav
-        className="flex md:hidden fixed bottom-0 left-0 right-0 bg-ink2"
-        style={{ height: 56, borderTop: '1px solid #2A2F33', zIndex: 40 }}
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex"
+        style={{ background: '#15181A', borderTop: '1px solid #2A2F33', height: 56 }}
       >
-        {navItems.map(item => {
-          const isActive = pathname.startsWith(item.href)
+        {visibleNav.map(item => {
+          const active = pathname.startsWith(item.href)
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="flex-1 flex items-center justify-center"
-              style={{
-                color:     isActive ? '#FF5A1F' : '#5C6369',
-                boxShadow: isActive ? 'inset 0 2px 0 #FF5A1F' : 'none',
-              }}
+              className="flex-1 flex flex-col items-center justify-center gap-1"
+              style={{ color: active ? '#FF5A1F' : '#F2EFEA99' }}
             >
-              <span className="font-mono text-[9px] tracking-mono uppercase">
-                {item.label}
+              <item.icon size={20} />
+              <span className="text-[10px]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                {item.label.toUpperCase()}
               </span>
             </Link>
           )
         })}
       </nav>
+
+      {/* ── Desktop sidebar ────────────────────────────────────────── */}
+      <aside
+        className="hidden md:flex fixed top-0 left-0 h-full z-50 flex-col"
+        style={{ width: 240, background: '#15181A', borderRight: '1px solid #2A2F33' }}
+      >
+        {/* Logo */}
+        <div className="flex items-center px-6 gap-3" style={{ height: 64, borderBottom: '1px solid #2A2F33' }}>
+          <JKMark />
+          <div>
+            <div className="text-xs font-bold" style={{ color: '#F2EFEA', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.1em' }}>
+              JEKOTECH
+            </div>
+            <div className="text-[10px]" style={{ color: '#F2EFEA66', fontFamily: 'JetBrains Mono, monospace' }}>
+              ADMIN PORTAL
+            </div>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 py-4 flex flex-col gap-1 px-3">
+          {visibleNav.map(item => {
+            const active = pathname.startsWith(item.href)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors"
+                style={{
+                  background: active ? '#FF5A1F1A' : 'transparent',
+                  color: active ? '#FF5A1F' : '#F2EFEA99',
+                  borderLeft: active ? '2px solid #FF5A1F' : '2px solid transparent',
+                  fontFamily: 'Inter, sans-serif',
+                }}
+              >
+                <item.icon size={18} />
+                {item.label}
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* User */}
+        <div className="px-4 py-4" style={{ borderTop: '1px solid #2A2F33' }}>
+          <div className="flex items-center gap-3">
+            <div
+              className="w-9 h-9 flex items-center justify-center text-xs font-bold flex-shrink-0"
+              style={{ background: '#FF5A1F', color: '#fff', fontFamily: 'JetBrains Mono, monospace' }}
+            >
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-medium truncate" style={{ color: '#F2EFEA', fontFamily: 'Inter, sans-serif' }}>
+                {userName}
+              </div>
+              <span
+                className="text-[10px] font-bold px-1.5 py-0.5"
+                style={{ background: badge.bg, color: badge.color, fontFamily: 'JetBrains Mono, monospace' }}
+              >
+                {badge.label.toUpperCase()}
+              </span>
+            </div>
+          </div>
+        </div>
+      </aside>
     </>
+  )
+}
+
+// ── Icons ────────────────────────────────────────────────────────────
+
+function JKMark() {
+  return (
+    <div
+      className="flex items-center justify-center font-black text-sm"
+      style={{ width: 32, height: 32, background: '#FF5A1F', color: '#fff', fontFamily: 'Space Grotesk, sans-serif', flexShrink: 0 }}
+    >
+      JK
+    </div>
+  )
+}
+
+function BookingsIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <rect x="3" y="4" width="14" height="13" rx="0" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M7 2v4M13 2v4M3 8h14" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M7 12h2M11 12h2M7 15h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function AnalyticsIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <path d="M3 15l4-5 3 3 4-6 3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M3 17h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function MechanicsIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M10 3v2M10 15v2M3 10h2M15 10h2M5.05 5.05l1.41 1.41M13.54 13.54l1.41 1.41M5.05 14.95l1.41-1.41M13.54 6.46l1.41-1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function SettingsIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M10 2.5A7.5 7.5 0 0 1 17.5 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M10 17.5A7.5 7.5 0 0 1 2.5 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M17.5 10A7.5 7.5 0 0 1 10 17.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M2.5 10A7.5 7.5 0 0 1 10 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
   )
 }
