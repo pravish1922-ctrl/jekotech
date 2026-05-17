@@ -6,10 +6,14 @@ import { createBrowserClient } from '@supabase/ssr'
 
 interface MechanicRow {
   id: string
+  initials: string
+  active: boolean
+  specialties: string[]
+  max_concurrent_jobs: number
+  color_hex: string | null
   name: string
   email: string
   phone: string | null
-  active: boolean
   job_count: number
 }
 
@@ -66,10 +70,11 @@ export function MechanicsClient({ mechanics: initial, isOwner }: Props) {
 
   async function handleToggle(mech: MechanicRow) {
     setTogglingId(mech.id)
-    // Upsert handles both mechanics-table-present and mechanics-table-absent cases
+    // Row is guaranteed to exist (sourced from mechanics table via JOIN)
     const { error } = await supabase
       .from('mechanics')
-      .upsert({ id: mech.id, name: mech.name, phone: mech.phone, active: !mech.active })
+      .update({ active: !mech.active })
+      .eq('id', mech.id)
     if (!error) {
       setMechanics(prev => prev.map(m => m.id === mech.id ? { ...m, active: !m.active } : m))
     }
@@ -87,45 +92,88 @@ export function MechanicsClient({ mechanics: initial, isOwner }: Props) {
         )}
         {mechanics.map(m => (
           <div key={m.id} className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33', boxShadow: '4px 4px 0 #0B0D0E' }}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium" style={{ color: '#F2EFEA', fontFamily: 'Inter, sans-serif' }}>{m.name}</p>
-                <p className="text-xs mt-0.5" style={{ color: '#F2EFEA66', fontFamily: 'JetBrains Mono, monospace' }}>{m.email}</p>
-                {m.phone && (
-                  <p className="text-xs mt-0.5" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace' }}>{m.phone}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-xs" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace' }}>
-                  {m.job_count} JOBS
+            <div className="flex items-start gap-3">
+              {/* Initials badge */}
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  background: m.color_hex ?? '#2A2F33',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <span style={{ color: '#fff', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 14 }}>
+                  {m.initials}
                 </span>
-                {isOwner ? (
-                  <button
-                    onClick={() => handleToggle(m)}
-                    disabled={togglingId === m.id}
-                    className="text-[10px] font-bold px-2 py-0.5"
-                    style={{
-                      background: m.active ? '#2F9E5A' : '#2A2F33',
-                      color: m.active ? '#fff' : '#8B9197',
-                      fontFamily: 'JetBrains Mono, monospace',
-                      opacity: togglingId === m.id ? 0.5 : 1,
-                      cursor: 'pointer',
-                      border: 'none',
-                    }}
-                  >
-                    {m.active ? 'ACTIVE' : 'INACTIVE'}
-                  </button>
-                ) : (
-                  <span
-                    className="text-[10px] font-bold px-2 py-0.5"
-                    style={{
-                      background: m.active ? '#2F9E5A' : '#2A2F33',
-                      color: m.active ? '#fff' : '#8B9197',
-                      fontFamily: 'JetBrains Mono, monospace',
-                    }}
-                  >
-                    {m.active ? 'ACTIVE' : 'INACTIVE'}
-                  </span>
+              </div>
+
+              {/* Details */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium" style={{ color: '#F2EFEA', fontFamily: 'Inter, sans-serif' }}>{m.name}</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#F2EFEA66', fontFamily: 'JetBrains Mono, monospace' }}>{m.email}</p>
+                    {m.phone && (
+                      <p className="text-xs mt-0.5" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace' }}>{m.phone}</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-xs" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace' }}>
+                      {m.job_count} JOBS
+                    </span>
+                    {isOwner ? (
+                      <button
+                        onClick={() => handleToggle(m)}
+                        disabled={togglingId === m.id}
+                        className="text-[10px] font-bold px-2 py-0.5"
+                        style={{
+                          background: m.active ? '#2F9E5A' : '#2A2F33',
+                          color: m.active ? '#fff' : '#8B9197',
+                          fontFamily: 'JetBrains Mono, monospace',
+                          opacity: togglingId === m.id ? 0.5 : 1,
+                          cursor: 'pointer',
+                          border: 'none',
+                        }}
+                      >
+                        {m.active ? 'ACTIVE' : 'INACTIVE'}
+                      </button>
+                    ) : (
+                      <span
+                        className="text-[10px] font-bold px-2 py-0.5"
+                        style={{
+                          background: m.active ? '#2F9E5A' : '#2A2F33',
+                          color: m.active ? '#fff' : '#8B9197',
+                          fontFamily: 'JetBrains Mono, monospace',
+                        }}
+                      >
+                        {m.active ? 'ACTIVE' : 'INACTIVE'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Specialties pills */}
+                {m.specialties.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {m.specialties.map(s => (
+                      <span
+                        key={s}
+                        className="text-[9px] font-bold px-1.5 py-0.5"
+                        style={{
+                          background: '#1E2225',
+                          color: '#F2EFEA66',
+                          fontFamily: 'JetBrains Mono, monospace',
+                          border: '1px solid #2A2F33',
+                        }}
+                      >
+                        {s.toUpperCase()}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

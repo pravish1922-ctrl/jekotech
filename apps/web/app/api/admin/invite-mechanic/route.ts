@@ -30,6 +30,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'name and email required' }, { status: 400 })
   }
 
+  function generateInitials(fullName: string): string {
+    const parts = fullName.trim().split(/\s+/)
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+    return parts[0][0].toUpperCase()
+  }
+
   // Check if a client with this email already exists
   const { data: existing } = await db
     .from('clients')
@@ -72,10 +78,10 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Insert mechanics row — only { id, name, phone, active: true }, no email column
+  // Insert mechanics row — only columns that exist in mechanics table
   const { error: mechErr } = await db
     .from('mechanics')
-    .insert({ id: newClient.id, name, phone, active: true })
+    .insert({ id: newClient.id, initials: generateInitials(name), active: true })
 
   if (mechErr) return NextResponse.json({ error: mechErr.message }, { status: 500 })
 

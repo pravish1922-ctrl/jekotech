@@ -2,6 +2,20 @@ import { createClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient } from '../../../../lib/supabase-server'
 import { MechanicsClient } from './mechanics-client'
 
+type MechanicWithClient = {
+  id: string
+  initials: string
+  active: boolean
+  specialties: string[] | null
+  max_concurrent_jobs: number | null
+  color_hex: string | null
+  clients: {
+    name: string
+    email: string
+    phone: string | null
+  } | null
+}
+
 function serviceDb() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,30 +34,24 @@ export default async function AdminMechanicsPage() {
     : { data: null }
   const isOwner = currentClient?.role === 'owner'
 
-  // Source of truth: all clients with role='mechanic'
-  const { data: mechanicClients } = await supabase
-    .from('clients')
-    .select('id, name, email, phone')
-    .eq('role', 'mechanic')
-    .order('name')
-
-  // Get active status from mechanics table (may be empty or partial)
-  const { data: mechanicsRows } = await supabase
+  // Join mechanics with clients to get name/email/phone alongside mechanic-specific fields
+  const { data: mechanicsData } = await supabase
     .from('mechanics')
-    .select('id, active')
+    .select('id, initials, active, specialties, max_concurrent_jobs, color_hex, clients(name, email, phone)')
 
-  const activeMap: Record<string, boolean> = {}
-  for (const m of mechanicsRows ?? []) {
-    activeMap[m.id] = m.active
-  }
-
-  const rows = (mechanicClients ?? []).map(c => ({
-    id:     c.id,
-    name:   c.name,
-    email:  c.email,
-    phone:  c.phone as string | null,
-    active: activeMap[c.id] ?? true,
-  }))
+  const rows = ((mechanicsData ?? []) as unknown as MechanicWithClient[])
+    .map(m => ({
+      id:                 m.id,
+      initials:           m.initials,
+      active:             m.active,
+      specialties:        m.specialties ?? [],
+      max_concurrent_jobs: m.max_concurrent_jobs ?? 1,
+      color_hex:          m.color_hex,
+      name:               m.clients?.name ?? '',
+      email:              m.clients?.email ?? '',
+      phone:              m.clients?.phone ?? null,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name))
 
   const mechanicIds = rows.map(m => m.id)
   const { data: jobCounts } = mechanicIds.length
