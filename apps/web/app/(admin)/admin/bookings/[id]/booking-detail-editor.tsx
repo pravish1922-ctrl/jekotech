@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createBrowserClient } from '@supabase/ssr'
+import { updateBooking } from './actions'
 
 type BookingStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
 
@@ -61,10 +61,6 @@ export function BookingDetailEditor({
   currentRole,
 }: Props) {
   const router = useRouter()
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
 
   const [status, setStatus] = useState<BookingStatus>(booking.status)
   const [mechanicId, setMechanicId] = useState<string>(booking.assigned_mechanic_id ?? '')
@@ -97,13 +93,10 @@ export function BookingDetailEditor({
       if (estimatedCost) updates.estimated_cost_mur = parseInt(estimatedCost)
       if (finalCost) updates.final_cost_mur = parseInt(finalCost)
     }
-    const { error: err } = await supabase
-      .from('bookings')
-      .update(updates)
-      .eq('id', booking.id)
+    const result = await updateBooking(booking.id, updates)
     setSaving(false)
-    if (err) {
-      setError(err.message)
+    if (result.error) {
+      setError(result.error)
     } else {
       router.push('/admin/bookings')
     }
