@@ -47,13 +47,45 @@ export async function GET(request: Request) {
         (user.user_metadata?.name as string | undefined) ??
         ''
 
-      const serviceDb = createClient(
+      const supabaseAdmin = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_KEY!
       )
 
+      // Phone-based walk-in merge: if a walk-in client record (email=null) shares
+      // this phone number, transfer their bookings/vehicles to the real auth ID
+      const phone =
+        (user.user_metadata?.phone as string | undefined) ??
+        (user.phone ?? null)
+
+      if (phone) {
+        const { data: walkin } = await supabaseAdmin
+          .from('clients')
+          .select('id')
+          .eq('phone', phone)
+          .is('email', null)
+          .maybeSingle()
+
+        if (walkin && walkin.id !== user.id) {
+          await supabaseAdmin
+            .from('bookings')
+            .update({ client_id: user.id })
+            .eq('client_id', walkin.id)
+
+          await supabaseAdmin
+            .from('vehicles')
+            .update({ owner_client_id: user.id })
+            .eq('owner_client_id', walkin.id)
+
+          await supabaseAdmin
+            .from('clients')
+            .delete()
+            .eq('id', walkin.id)
+        }
+      }
+
       // Create clients row if it doesn't exist (idempotent for OAuth sign-ins)
-      await serviceDb.from('clients').upsert(
+      await supabaseAdmin.from('clients').upsert(
         {
           id:              user.id,
           name,
@@ -65,7 +97,7 @@ export async function GET(request: Request) {
       )
 
       // Look up the user's actual role (may differ from 'customer' for existing users)
-      const { data: clientRow } = await serviceDb
+      const { data: clientRow } = await supabaseAdmin
         .from('clients')
         .select('role')
         .eq('id', user.id)

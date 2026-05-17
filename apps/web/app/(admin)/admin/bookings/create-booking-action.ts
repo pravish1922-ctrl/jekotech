@@ -22,7 +22,7 @@ export async function createClientForBooking(
       id: clientId,
       name,
       phone: phone || null,
-      email: `walkin-${clientId}@jekotech.internal`,
+      email: null,
       role: 'customer',
       whatsapp_opt_in: false,
     })
