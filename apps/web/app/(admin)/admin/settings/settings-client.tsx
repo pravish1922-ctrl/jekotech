@@ -337,11 +337,11 @@ export function SettingsClient({ profileName, profileEmail, profileRole, service
           </div>
 
           <div className="pt-3" style={{ borderTop: '1px solid #2A2F33' }}>
-            <FieldLabel>SERVICE BAYS (simultaneous cars)</FieldLabel>
+            <FieldLabel>SERVICE BAYS</FieldLabel>
             <input type="number" min={1} max={20} value={bays} onChange={e => setBays(e.target.value)}
               className="w-full px-3 py-2 text-sm outline-none" style={MONO_INPUT} />
             <p className="text-[10px] mt-1" style={{ color: '#F2EFEA33', fontFamily: 'Inter, sans-serif' }}>
-              How many cars can be serviced at the same time
+              Cars that can be serviced simultaneously
             </p>
           </div>
 

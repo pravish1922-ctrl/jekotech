@@ -1,4 +1,5 @@
-import { createServerSupabaseClient as createServerClient } from '../../lib/supabase-server'
+import { createServerSupabaseClient as createAuthClient } from '../../lib/supabase-server'
+import { createClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { AdminSidebar } from '../../components/admin/admin-sidebar'
 
@@ -14,13 +15,25 @@ function getInitials(name: string): string {
   return (parts[0]?.[0] ?? '?').toUpperCase()
 }
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createServerClient()
+function roleHome(role: string | null): string {
+  switch (role) {
+    case 'mechanic': return '/mechanic/jobs'
+    default:         return '/home'
+  }
+}
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const authClient = createAuthClient()
+  const { data: { user }, error: authError } = await authClient.auth.getUser()
   if (authError || !user) redirect('/login')
 
-  const { data: clientRaw } = await supabase
+  // Use service role for DB read so RLS misconfiguration can never silently fail
+  const db = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
+  )
+
+  const { data: clientRaw } = await db
     .from('clients')
     .select('name, role')
     .eq('id', user.id)
@@ -30,7 +43,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const fullName = (clientRaw as { name: string; role: string } | null)?.name ?? ''
 
   if (!role || !ADMIN_ROLES.has(role)) {
-    redirect('/home')
+    redirect(roleHome(role))
   }
 
   return (

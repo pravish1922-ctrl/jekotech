@@ -65,8 +65,8 @@ export function MechanicTopBar({ userName }: MechanicTopBarProps) {
         <button
           onClick={handleSignOut}
           className="flex items-center justify-center w-8 h-8 text-xs font-bold"
-          style={{ background: '#FF5A1F', color: '#fff', fontFamily: 'JetBrains Mono, monospace' }}
-          title="Sign out"
+          style={{ background: '#E8412B', color: '#fff', fontFamily: 'JetBrains Mono, monospace' }}
+          title="TAP TO SIGN OUT"
         >
           {initials}
         </button>

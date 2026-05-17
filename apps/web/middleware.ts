@@ -27,6 +27,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Preview mode — bypass role-based redirects so admin can view customer portal
+  const isPreview = request.nextUrl.searchParams.get('preview') === 'customer'
+  if (isPreview) {
+    const response = NextResponse.next()
+    response.cookies.set('preview_mode', 'true', { maxAge: 3600, path: '/' })
+    return response
+  }
+
   // Build a response we can mutate (needed to refresh the session cookie)
   let response = NextResponse.next({ request: { headers: request.headers } })
 

@@ -66,10 +66,10 @@ export function MechanicsClient({ mechanics: initial, isOwner }: Props) {
 
   async function handleToggle(mech: MechanicRow) {
     setTogglingId(mech.id)
+    // Upsert handles both mechanics-table-present and mechanics-table-absent cases
     const { error } = await supabase
       .from('mechanics')
-      .update({ active: !mech.active })
-      .eq('id', mech.id)
+      .upsert({ id: mech.id, name: mech.name, phone: mech.phone, active: !mech.active })
     if (!error) {
       setMechanics(prev => prev.map(m => m.id === mech.id ? { ...m, active: !m.active } : m))
     }

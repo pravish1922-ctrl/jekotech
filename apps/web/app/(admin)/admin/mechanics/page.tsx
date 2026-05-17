@@ -20,12 +20,30 @@ export default async function AdminMechanicsPage() {
     : { data: null }
   const isOwner = currentClient?.role === 'owner'
 
-  const { data: mechanics } = await supabase
-    .from('mechanics')
-    .select('id, name, email, phone, active, created_at')
+  // Source of truth: all clients with role='mechanic'
+  const { data: mechanicClients } = await supabase
+    .from('clients')
+    .select('id, name, email, phone')
+    .eq('role', 'mechanic')
     .order('name')
 
-  const rows = mechanics ?? []
+  // Get active status from mechanics table (may be empty or partial)
+  const { data: mechanicsRows } = await supabase
+    .from('mechanics')
+    .select('id, active')
+
+  const activeMap: Record<string, boolean> = {}
+  for (const m of mechanicsRows ?? []) {
+    activeMap[m.id] = m.active
+  }
+
+  const rows = (mechanicClients ?? []).map(c => ({
+    id:     c.id,
+    name:   c.name,
+    email:  c.email,
+    phone:  c.phone as string | null,
+    active: activeMap[c.id] ?? true,
+  }))
 
   const mechanicIds = rows.map(m => m.id)
   const { data: jobCounts } = mechanicIds.length
@@ -43,7 +61,7 @@ export default async function AdminMechanicsPage() {
     }
   }
 
-  const enriched = rows.map(m => ({ ...m, phone: m.phone as string | null, job_count: countMap[m.id] ?? 0 }))
+  const enriched = rows.map(m => ({ ...m, job_count: countMap[m.id] ?? 0 }))
 
   return (
     <div style={{ minHeight: '100vh', background: '#0B0D0E', paddingBottom: 80 }}>

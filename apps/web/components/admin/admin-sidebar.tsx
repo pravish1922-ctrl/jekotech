@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { createBrowserClient } from '@supabase/ssr'
 
 type AdminRole = 'owner' | 'delegate' | 'staff'
 
@@ -12,10 +13,11 @@ interface AdminSidebarProps {
 }
 
 const NAV = [
-  { href: '/admin/bookings', label: 'Bookings', icon: BookingsIcon, roles: ['owner', 'delegate', 'staff'] },
-  { href: '/admin/analytics', label: 'Analytics', icon: AnalyticsIcon, roles: ['owner', 'delegate'] },
-  { href: '/admin/mechanics', label: 'Mechanics', icon: MechanicsIcon, roles: ['owner', 'delegate'] },
-  { href: '/admin/settings', label: 'Settings', icon: SettingsIcon, roles: ['owner'] },
+  { href: '/admin/bookings',  label: 'Bookings',  icon: BookingsIcon,  roles: ['owner', 'delegate', 'staff'], special: false },
+  { href: '/admin/analytics', label: 'Analytics', icon: AnalyticsIcon, roles: ['owner', 'delegate'],          special: false },
+  { href: '/admin/mechanics', label: 'Mechanics', icon: MechanicsIcon, roles: ['owner', 'delegate'],          special: false },
+  { href: '/admin/settings',  label: 'Settings',  icon: SettingsIcon,  roles: ['owner'],                     special: false },
+  { href: '/admin/preview',   label: 'Preview',   icon: EyeIcon,       roles: ['owner'],                     special: true  },
 ]
 
 const ROLE_BADGE: Record<AdminRole, { label: string; bg: string; color: string }> = {
@@ -26,8 +28,18 @@ const ROLE_BADGE: Record<AdminRole, { label: string; bg: string; color: string }
 
 export function AdminSidebar({ role, userName, initials }: AdminSidebarProps) {
   const pathname = usePathname()
-  const badge = ROLE_BADGE[role]
+  const router   = useRouter()
+  const badge    = ROLE_BADGE[role]
   const visibleNav = NAV.filter(n => n.roles.includes(role))
+
+  async function handleSignOut() {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   return (
     <>
@@ -65,7 +77,7 @@ export function AdminSidebar({ role, userName, initials }: AdminSidebarProps) {
               key={item.href}
               href={item.href}
               className="flex-1 flex flex-col items-center justify-center gap-1"
-              style={{ color: active ? '#FF5A1F' : '#F2EFEA99' }}
+              style={{ color: item.special ? '#C8FF3A' : active ? '#FF5A1F' : '#F2EFEA99' }}
             >
               <item.icon size={20} />
               <span className="text-[10px]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
@@ -74,6 +86,17 @@ export function AdminSidebar({ role, userName, initials }: AdminSidebarProps) {
             </Link>
           )
         })}
+        {/* Sign out — rightmost on mobile */}
+        <button
+          onClick={handleSignOut}
+          className="flex-1 flex flex-col items-center justify-center gap-1"
+          style={{ color: '#E8412B', background: 'transparent', border: 'none', cursor: 'pointer' }}
+        >
+          <SignOutIcon size={20} />
+          <span className="text-[10px]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+            OUT
+          </span>
+        </button>
       </nav>
 
       {/* ── Desktop sidebar ────────────────────────────────────────── */}
@@ -98,16 +121,17 @@ export function AdminSidebar({ role, userName, initials }: AdminSidebarProps) {
         <nav className="flex-1 py-4 flex flex-col gap-1 px-3">
           {visibleNav.map(item => {
             const active = pathname.startsWith(item.href)
+            const color  = item.special ? '#C8FF3A' : active ? '#FF5A1F' : '#F2EFEA99'
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors"
                 style={{
-                  background: active ? '#FF5A1F1A' : 'transparent',
-                  color: active ? '#FF5A1F' : '#F2EFEA99',
-                  borderLeft: active ? '2px solid #FF5A1F' : '2px solid transparent',
-                  fontFamily: 'Inter, sans-serif',
+                  background:  active && !item.special ? '#FF5A1F1A' : 'transparent',
+                  color,
+                  borderLeft:  active && !item.special ? '2px solid #FF5A1F' : item.special ? '2px solid #C8FF3A44' : '2px solid transparent',
+                  fontFamily:  'Inter, sans-serif',
                 }}
               >
                 <item.icon size={18} />
@@ -117,8 +141,8 @@ export function AdminSidebar({ role, userName, initials }: AdminSidebarProps) {
           })}
         </nav>
 
-        {/* User */}
-        <div className="px-4 py-4" style={{ borderTop: '1px solid #2A2F33' }}>
+        {/* User block */}
+        <div className="px-4 pt-4" style={{ borderTop: '1px solid #2A2F33' }}>
           <div className="flex items-center gap-3">
             <div
               className="w-9 h-9 flex items-center justify-center text-xs font-bold flex-shrink-0"
@@ -138,6 +162,25 @@ export function AdminSidebar({ role, userName, initials }: AdminSidebarProps) {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Sign out — desktop */}
+        <div className="px-4 py-4">
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium"
+            style={{
+              background:  '#E8412B1A',
+              color:       '#E8412B',
+              border:      '1px solid #E8412B44',
+              fontFamily:  'JetBrains Mono, monospace',
+              letterSpacing: '0.05em',
+              cursor:      'pointer',
+            }}
+          >
+            <SignOutIcon size={16} />
+            SIGN OUT
+          </button>
         </div>
       </aside>
     </>
@@ -193,6 +236,25 @@ function SettingsIcon({ size = 20 }: { size?: number }) {
       <path d="M10 17.5A7.5 7.5 0 0 1 2.5 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
       <path d="M17.5 10A7.5 7.5 0 0 1 10 17.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
       <path d="M2.5 10A7.5 7.5 0 0 1 10 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function EyeIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <path d="M1 10s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+      <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+    </svg>
+  )
+}
+
+function SignOutIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <path d="M8 3H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M13 14l3-4-3-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M16 10H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   )
 }
