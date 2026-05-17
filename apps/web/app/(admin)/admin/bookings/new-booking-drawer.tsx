@@ -75,6 +75,11 @@ export function NewBookingDrawer({ open, onClose, clients, vehicles, services, m
   const [createError, setCreateError] = useState<string | null>(null)
   const [createdRef, setCreatedRef] = useState<string | null>(null)
 
+  // Step 2 vehicle creation state
+  const [vehicleStepLoading, setVehicleStepLoading] = useState(false)
+  const [vehicleStepError, setVehicleStepError] = useState<string | null>(null)
+  const [createdVehicleId, setCreatedVehicleId] = useState<string | null>(null)
+
   function reset() {
     setStep(1)
     setClientMode('existing')
@@ -97,6 +102,9 @@ export function NewBookingDrawer({ open, onClose, clients, vehicles, services, m
     setCreating(false)
     setCreateError(null)
     setCreatedRef(null)
+    setVehicleStepLoading(false)
+    setVehicleStepError(null)
+    setCreatedVehicleId(null)
   }
 
   function handleClose() {
@@ -112,8 +120,33 @@ export function NewBookingDrawer({ open, onClose, clients, vehicles, services, m
   }
 
   function canAdvanceStep2() {
-    if (vehicleMode === 'existing') return !!selectedVehicleId
+    // When there are no client vehicles, the UI always shows the new vehicle form
+    // even if vehicleMode is still 'existing' (the mode toggle is hidden)
+    const effectivelyNew = vehicleMode === 'new' || clientVehicles.length === 0
+    if (!effectivelyNew) return !!selectedVehicleId
     return newVehicleReg.trim().length > 0 && newVehicleMake.trim().length > 0 && newVehicleModel.trim().length > 0
+  }
+
+  async function handleNextFromStep2() {
+    setVehicleStepError(null)
+    // Only create early when we already have a client ID (existing client)
+    if (clientMode === 'existing' && (vehicleMode === 'new' || clientVehicles.length === 0)) {
+      setVehicleStepLoading(true)
+      const result = await createVehicleForBooking(
+        selectedClientId,
+        newVehicleReg.trim().toUpperCase(),
+        newVehicleMake.trim(),
+        newVehicleModel.trim(),
+        parseInt(newVehicleYear) || new Date().getFullYear()
+      )
+      setVehicleStepLoading(false)
+      if (result.error || !result.data) {
+        setVehicleStepError(result.error ?? 'Failed to create vehicle')
+        return
+      }
+      setCreatedVehicleId(result.data.id)
+    }
+    setStep(3)
   }
 
   function canAdvanceStep3() {
@@ -137,20 +170,27 @@ export function NewBookingDrawer({ open, onClose, clients, vehicles, services, m
       finalClientId = result.data.id
     }
 
-    if (vehicleMode === 'new') {
-      const result = await createVehicleForBooking(
-        finalClientId,
-        newVehicleReg.trim().toUpperCase(),
-        newVehicleMake.trim(),
-        newVehicleModel.trim(),
-        parseInt(newVehicleYear) || new Date().getFullYear()
-      )
-      if (result.error || !result.data) {
-        setCreateError(result.error ?? 'Failed to create vehicle')
-        setCreating(false)
-        return
+    const effectivelyNewVehicle = vehicleMode === 'new' || clientVehicles.length === 0
+    if (effectivelyNewVehicle) {
+      if (createdVehicleId) {
+        // Already created at step 2→3 transition
+        finalVehicleId = createdVehicleId
+      } else {
+        // New client path — create vehicle now with the newly created client ID
+        const result = await createVehicleForBooking(
+          finalClientId,
+          newVehicleReg.trim().toUpperCase(),
+          newVehicleMake.trim(),
+          newVehicleModel.trim(),
+          parseInt(newVehicleYear) || new Date().getFullYear()
+        )
+        if (result.error || !result.data) {
+          setCreateError(result.error ?? 'Failed to create vehicle')
+          setCreating(false)
+          return
+        }
+        finalVehicleId = result.data.id
       }
-      finalVehicleId = result.data.id
     }
 
     const scheduledStart = `${scheduledDate}T${scheduledTime}:00`
@@ -371,6 +411,11 @@ export function NewBookingDrawer({ open, onClose, clients, vehicles, services, m
                     </div>
                   </>
                 )}
+                {vehicleStepError && (
+                  <p className="text-xs" style={{ color: '#E8412B', fontFamily: 'JetBrains Mono, monospace' }}>
+                    ERROR: {vehicleStepError}
+                  </p>
+                )}
               </>
             )}
 
@@ -506,7 +551,14 @@ export function NewBookingDrawer({ open, onClose, clients, vehicles, services, m
               <div className="flex gap-2 mt-auto pt-4">
                 {step > 1 && (
                   <button
-                    onClick={() => setStep(s => (s - 1) as 1 | 2 | 3 | 4)}
+                    onClick={() => {
+                      if (step === 3) {
+                        // Going back to step 2 — allow re-creating vehicle if needed
+                        setCreatedVehicleId(null)
+                        setVehicleStepError(null)
+                      }
+                      setStep(s => (s - 1) as 1 | 2 | 3 | 4)
+                    }}
                     className="flex-1 py-2.5 text-xs font-bold"
                     style={{ background: '#1E2225', color: '#F2EFEA66', border: '1px solid #2A2F33', fontFamily: 'JetBrains Mono, monospace', cursor: 'pointer' }}
                   >
@@ -515,8 +567,9 @@ export function NewBookingDrawer({ open, onClose, clients, vehicles, services, m
                 )}
                 {step < 4 && (
                   <button
-                    onClick={() => setStep(s => (s + 1) as 1 | 2 | 3 | 4)}
+                    onClick={step === 2 ? handleNextFromStep2 : () => setStep(s => (s + 1) as 1 | 2 | 3 | 4)}
                     disabled={
+                      vehicleStepLoading ||
                       (step === 1 && !canAdvanceStep1()) ||
                       (step === 2 && !canAdvanceStep2()) ||
                       (step === 3 && !canAdvanceStep3())
@@ -529,13 +582,14 @@ export function NewBookingDrawer({ open, onClose, clients, vehicles, services, m
                       fontFamily: 'JetBrains Mono, monospace',
                       cursor: 'pointer',
                       opacity: (
+                        vehicleStepLoading ||
                         (step === 1 && !canAdvanceStep1()) ||
                         (step === 2 && !canAdvanceStep2()) ||
                         (step === 3 && !canAdvanceStep3())
                       ) ? 0.4 : 1,
                     }}
                   >
-                    NEXT →
+                    {step === 2 && vehicleStepLoading ? 'SAVING…' : 'NEXT →'}
                   </button>
                 )}
               </div>

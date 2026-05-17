@@ -34,7 +34,16 @@ export async function createVehicleForBooking(
   const db = serviceDb()
   const { data, error } = await db
     .from('vehicles')
-    .insert({ owner_client_id: ownerId, registration, make, model, year, mileage: 0 })
+    .insert({
+      id: crypto.randomUUID(),
+      owner_client_id: ownerId,
+      registration,
+      make,
+      model,
+      year,
+      mileage: 0,
+      colour: '',
+    })
     .select('id')
     .single()
   if (error) return { error: error.message }

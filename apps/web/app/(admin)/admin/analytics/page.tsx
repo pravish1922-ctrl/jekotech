@@ -56,13 +56,39 @@ export default async function AdminAnalyticsPage({
   const { data: bookings } = await query
   const rows = bookings ?? []
 
-  // KPIs — use final_cost_mur if available, fallback to estimated_cost_mur
-  const totalRevenue   = rows.reduce((s, b) => s + (b.final_cost_mur ?? b.estimated_cost_mur ?? 0), 0)
-  const totalBookings  = rows.length
-  const pendingCount   = rows.filter(b => b.status === 'pending').length
-  const completedCount = rows.filter(b => b.status === 'completed').length
+  // Split rows by status
+  const completedRows  = rows.filter(b => b.status === 'completed')
+  const inProgressRows = rows.filter(b => b.status === 'in_progress')
+  const cancelledRows  = rows.filter(b => b.status === 'cancelled')
+  const awaitingRows   = rows.filter(b => b.status === 'pending' || b.status === 'confirmed')
 
-  // Revenue by service — use best available cost
+  // Revenue KPIs
+  const totalRevenue    = completedRows.reduce((s, b) => s + (b.final_cost_mur ?? b.estimated_cost_mur ?? 0), 0)
+  const inProgressValue = inProgressRows.reduce((s, b) => s + (b.estimated_cost_mur ?? 0), 0)
+  const lostRevenue     = cancelledRows.reduce((s, b) => s + (b.estimated_cost_mur ?? 0), 0)
+
+  // Count KPIs
+  const awaitingCount   = awaitingRows.length
+  const inProgressCount = inProgressRows.length
+  const completedCount  = completedRows.length
+  const cancelledCount  = cancelledRows.length
+
+  // Stats KPIs
+  const nonCancelledWithCost = rows
+    .filter(b => b.status !== 'cancelled')
+    .filter(b => (b.final_cost_mur ?? b.estimated_cost_mur) != null)
+  const avgBookingValue = nonCancelledWithCost.length > 0
+    ? Math.round(nonCancelledWithCost.reduce((s, b) => s + (b.final_cost_mur ?? b.estimated_cost_mur ?? 0), 0) / nonCancelledWithCost.length)
+    : 0
+
+  const clientBookingCounts: Record<string, number> = {}
+  for (const b of rows) {
+    if (b.client_id) clientBookingCounts[b.client_id] = (clientBookingCounts[b.client_id] ?? 0) + 1
+  }
+  const returningClientsCount = Object.values(clientBookingCounts).filter(c => c > 1).length
+  const totalDistinctClients  = Object.keys(clientBookingCounts).length
+
+  // Revenue by service — exclude cancelled
   const allSvcIds = [...new Set(rows.flatMap(b => b.service_ids ?? []))]
   const { data: services } = allSvcIds.length
     ? await supabase.from('services').select('id, name_en').in('id', allSvcIds)
@@ -72,6 +98,7 @@ export default async function AdminAnalyticsPage({
 
   const revenueByService: Record<string, { name: string; revenue: number; count: number }> = {}
   for (const b of rows) {
+    if (b.status === 'cancelled') continue
     const cost = b.final_cost_mur ?? b.estimated_cost_mur
     if (!cost || !b.service_ids?.length) continue
     const perSvc = Math.round(cost / b.service_ids.length)
@@ -125,7 +152,6 @@ export default async function AdminAnalyticsPage({
             </p>
           </div>
 
-          {/* Date range selector */}
           <div className="flex gap-1">
             {RANGE_OPTIONS.map(opt => (
               <Link
@@ -148,23 +174,58 @@ export default async function AdminAnalyticsPage({
 
       <div className="px-6 mt-6 flex flex-col gap-6 max-w-3xl">
 
-        {/* KPI Cards */}
+        {/* Revenue KPI Cards */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33', boxShadow: '4px 4px 0 #0B0D0E' }}>
+            <p className="text-[10px] font-bold mb-1" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>TOTAL REVENUE</p>
+            <p className="text-2xl font-bold" style={{ color: '#2F9E5A', fontFamily: 'Space Grotesk, sans-serif' }}>₨{totalRevenue.toLocaleString()}</p>
+            <p className="text-[9px] mt-1" style={{ color: '#F2EFEA33', fontFamily: 'JetBrains Mono, monospace' }}>COMPLETED ONLY</p>
+          </div>
+          <div className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33', boxShadow: '4px 4px 0 #0B0D0E' }}>
+            <p className="text-[10px] font-bold mb-1" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>IN PROGRESS VALUE</p>
+            <p className="text-2xl font-bold" style={{ color: '#FF5A1F', fontFamily: 'Space Grotesk, sans-serif' }}>₨{inProgressValue.toLocaleString()}</p>
+            <p className="text-[9px] mt-1" style={{ color: '#F2EFEA33', fontFamily: 'JetBrains Mono, monospace' }}>EST. COST</p>
+          </div>
+          <div className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33', boxShadow: '4px 4px 0 #0B0D0E' }}>
+            <p className="text-[10px] font-bold mb-1" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>LOST REVENUE</p>
+            <p className="text-2xl font-bold" style={{ color: '#8B9197', fontFamily: 'Space Grotesk, sans-serif' }}>₨{lostRevenue.toLocaleString()}</p>
+            <p className="text-[9px] mt-1" style={{ color: '#F2EFEA33', fontFamily: 'JetBrains Mono, monospace' }}>CANCELLED</p>
+          </div>
+        </div>
+
+        {/* Count KPI Cards */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: 'TOTAL REVENUE',  value: `₨${totalRevenue.toLocaleString()}`, accent: '#2F9E5A' },
-            { label: 'TOTAL BOOKINGS', value: totalBookings.toString(),             accent: '#3B82F6' },
-            { label: 'PENDING',        value: pendingCount.toString(),              accent: '#F5C518' },
-            { label: 'COMPLETED',      value: completedCount.toString(),            accent: '#FF5A1F' },
-          ].map(({ label, value, accent }) => (
+            { label: 'AWAITING',    value: awaitingCount.toString(),   accent: '#F5C518', sub: 'PENDING + CONFIRMED' },
+            { label: 'IN PROGRESS', value: inProgressCount.toString(), accent: '#FF5A1F', sub: 'ACTIVE JOBS' },
+            { label: 'COMPLETED',   value: completedCount.toString(),  accent: '#2F9E5A', sub: 'FINISHED' },
+            { label: 'CANCELLED',   value: cancelledCount.toString(),  accent: '#8B9197', sub: 'DROPPED' },
+          ].map(({ label, value, accent, sub }) => (
             <div key={label} className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33', boxShadow: '4px 4px 0 #0B0D0E' }}>
-              <p className="text-[10px] font-bold mb-1" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>
-                {label}
-              </p>
-              <p className="text-2xl font-bold" style={{ color: accent, fontFamily: 'Space Grotesk, sans-serif' }}>
-                {value}
-              </p>
+              <p className="text-[10px] font-bold mb-1" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>{label}</p>
+              <p className="text-2xl font-bold" style={{ color: accent, fontFamily: 'Space Grotesk, sans-serif' }}>{value}</p>
+              <p className="text-[9px] mt-1" style={{ color: '#F2EFEA33', fontFamily: 'JetBrains Mono, monospace' }}>{sub}</p>
             </div>
           ))}
+        </div>
+
+        {/* Stats KPI Cards */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33', boxShadow: '4px 4px 0 #0B0D0E' }}>
+            <p className="text-[10px] font-bold mb-1" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>AVG VALUE</p>
+            <p className="text-2xl font-bold" style={{ color: '#3B82F6', fontFamily: 'Space Grotesk, sans-serif' }}>₨{avgBookingValue.toLocaleString()}</p>
+            <p className="text-[9px] mt-1" style={{ color: '#F2EFEA33', fontFamily: 'JetBrains Mono, monospace' }}>PER BOOKING</p>
+          </div>
+          <div className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33', boxShadow: '4px 4px 0 #0B0D0E' }}>
+            <p className="text-[10px] font-bold mb-1" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>RETURNING</p>
+            <p className="text-2xl font-bold" style={{ color: '#3B82F6', fontFamily: 'Space Grotesk, sans-serif' }}>{returningClientsCount}</p>
+            <p className="text-[9px] mt-1" style={{ color: '#F2EFEA33', fontFamily: 'JetBrains Mono, monospace' }}>REPEAT CLIENTS</p>
+          </div>
+          <div className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33', boxShadow: '4px 4px 0 #0B0D0E' }}>
+            <p className="text-[10px] font-bold mb-1" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>TOTAL CLIENTS</p>
+            <p className="text-2xl font-bold" style={{ color: '#3B82F6', fontFamily: 'Space Grotesk, sans-serif' }}>{totalDistinctClients}</p>
+            <p className="text-[9px] mt-1" style={{ color: '#F2EFEA33', fontFamily: 'JetBrains Mono, monospace' }}>UNIQUE</p>
+          </div>
         </div>
 
         {/* 14-day bar chart */}
