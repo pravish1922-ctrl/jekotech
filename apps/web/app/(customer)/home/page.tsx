@@ -155,7 +155,7 @@ export default async function HomePage() {
   // Mechanic for the first upcoming booking only
   const nextBooking  = upcomingBookings[0] ?? null
   const mechPromise  = nextBooking?.assigned_mechanic_id
-    ? supabase.from('mechanics').select('name').eq('id', nextBooking.assigned_mechanic_id).single()
+    ? supabase.from('mechanics').select('clients(name)').eq('id', nextBooking.assigned_mechanic_id).single()
     : Promise.resolve(null)
 
   const svcPromise = allSvcIds.length > 0
@@ -164,7 +164,8 @@ export default async function HomePage() {
 
   const [mechResult, svcResult] = await Promise.all([mechPromise, svcPromise])
 
-  const mechanicName = (mechResult?.data as { name: string } | null)?.name ?? null
+  type MechWithClient = { clients: { name: string } | null }
+  const mechanicName = (mechResult?.data as MechWithClient | null)?.clients?.name ?? null
 
   const svcMap = new Map<string, string>(
     svcResult?.data

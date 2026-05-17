@@ -12,6 +12,23 @@
 
 ---
 
+## MANDATORY AUTOMATED CHECKS
+These run automatically via hooks — do NOT skip:
+1. After every file write: review against design system + RLS rules
+2. After npx next build: `scripts/post-build-qa.sh` runs automatically
+   - If it returns FAIL, fix all issues before proceeding
+   - Never commit with a failing QA script
+3. Before git commit: `scripts/pre-commit-security.sh` runs automatically
+   - If it returns FAIL, fix all violations before committing
+
+## KNOWN SCHEMA FACTS (verified in DB — never deviate)
+- **mechanics** table columns: `id`, `initials`, `active`, `specialties`, `max_concurrent_jobs`, `color_hex` — NO `name`/`email`/`phone`
+- mechanics `name`/`email`/`phone` → always join with `clients` table: `.select('id, clients(name)')`
+- `garage_config`: single row `id=1`, use `ON CONFLICT (id) DO NOTHING` on insert
+- `clients` role values: `owner` / `delegate` / `staff` / `mechanic` / `customer` only
+
+---
+
 ## Pre-Task Workflow (MANDATORY — 5 steps before writing code)
 
 1. **Read the batch spec** — `docs/batches/batch-[current]-spec.md`

@@ -240,7 +240,7 @@ export function BookingDetailEditor({
                   }}
                 >
                   <option value="">— Unassigned —</option>
-                  {mechanics.map((m: { id: string; name: string }) => (
+                  {mechanics.map(m => (
                     <option key={m.id} value={m.id}>{m.name}</option>
                   ))}
                 </select>

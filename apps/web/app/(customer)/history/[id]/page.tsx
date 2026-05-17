@@ -89,13 +89,14 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
       ? supabase.from('vehicles').select('registration, make, model, year').eq('id', vehicleId).single()
       : Promise.resolve(null),
     booking.assigned_mechanic_id
-      ? supabase.from('mechanics').select('name').eq('id', booking.assigned_mechanic_id).single()
+      ? supabase.from('mechanics').select('clients(name)').eq('id', booking.assigned_mechanic_id).single()
       : Promise.resolve(null),
   ])
 
+  type MechWithClient = { clients: { name: string } | null }
   const serviceName  = (svcResult?.data as { name_en: string } | null)?.name_en ?? '—'
   const vehicle      = vehicleResult?.data as { registration: string; make: string; model: string; year: number } | null
-  const mechanicName = (mechResult?.data as { name: string } | null)?.name ?? null
+  const mechanicName = (mechResult?.data as MechWithClient | null)?.clients?.name ?? null
 
   const statusCfg = STATUS_CFG[booking.status] ?? STATUS_CFG.pending
   const { date, time } = formatDateTime(booking.scheduled_start)

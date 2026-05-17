@@ -286,3 +286,54 @@ THEN it shows "14 MAY · 10:30" (no year)
 GIVEN a booking from a previous year  
 WHEN the date is formatted  
 THEN it shows "3 JAN 2024 · 09:00" (with year)
+
+---
+
+## Batch G Regression Tests
+
+**TC-G-01 — Preview banner must not appear on auth pages**
+GIVEN the admin is in preview mode (`preview_mode` cookie set)  
+WHEN they are redirected to `/login` (e.g. after sign out)  
+THEN the orange PREVIEW MODE banner does NOT appear on the login page
+
+**TC-G-02 — Preview banner hidden inside phone mockup**
+GIVEN an owner visits `/admin/preview`  
+WHEN the customer portal loads inside the phone mockup iframe  
+THEN the orange EXIT PREVIEW banner does NOT appear inside the iframe
+
+**TC-G-03 — Sign out clears preview cookie**
+GIVEN the admin is in preview mode (`preview_mode` cookie set)  
+WHEN they click SIGN OUT in the admin sidebar  
+THEN they are redirected to `/login`  
+AND the `preview_mode` cookie is cleared (banner does not reappear on next login)
+
+**TC-G-04 — Mechanic sign out clears preview cookie**
+GIVEN a mechanic is logged in  
+WHEN they tap the initials button in the top bar  
+THEN they are redirected to `/login`  
+AND the `preview_mode` cookie is cleared
+
+**TC-G-05 — Mechanic dropdown shows names**
+GIVEN mechanics exist with rows in both `mechanics` and `clients` tables  
+WHEN an owner opens a booking detail page (`/admin/bookings/:id`)  
+THEN the ASSIGN MECHANIC dropdown shows mechanic names (not blank or "(unknown)")
+
+**TC-G-06 — Auth callback redirects by role**
+GIVEN a mechanic completes Google OAuth login  
+WHEN the `/auth/callback` route runs  
+THEN they are redirected to `/mechanic/jobs` (not `/home`)
+
+**TC-G-07 — Auth callback redirects owner to admin**
+GIVEN an owner completes Google OAuth login  
+WHEN the `/auth/callback` route runs  
+THEN they are redirected to `/admin/bookings` (not `/home`)
+
+**TC-G-08 — roleHome always includes subpath**
+GIVEN any code path that redirects by role  
+WHEN the role is `owner`, `delegate`, or `staff`  
+THEN the redirect URL is `/admin/bookings` (never bare `/admin`)
+
+**TC-G-09 — roleHome mechanic subpath**
+GIVEN any code path that redirects by role  
+WHEN the role is `mechanic`  
+THEN the redirect URL is `/mechanic/jobs` (never bare `/mechanic`)
