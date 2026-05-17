@@ -203,6 +203,10 @@ export function SettingsClient({ profileName, profileEmail, profileRole, service
   const [resetPinErr,  setResetPinErr]      = useState<Record<string, string>>({})
   const [resetPinOk,   setResetPinOk]       = useState<string | null>(null)
 
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [deletingId,      setDeletingId]      = useState<string | null>(null)
+  const [deleteErr,       setDeleteErr]       = useState<string | null>(null)
+
   async function handleAddStaff() {
     if (!newStaffName.trim() || !newStaffUser.trim() || !newStaffPin.trim()) return
     setAddingStaff(true); setAddStaffErr(null); setAddStaffOk(false)
@@ -233,6 +237,21 @@ export function SettingsClient({ profileName, profileEmail, profileRole, service
     if (json.error) { setResetPinErr(prev => ({ ...prev, [memberId]: json.error! })); return }
     setResetPinId(null); setResetPinVal('')
     setResetPinOk(memberId); setTimeout(() => setResetPinOk(ok => ok === memberId ? null : ok), 2000)
+  }
+
+  async function handleDeleteStaff(memberId: string) {
+    setDeletingId(memberId)
+    setDeleteErr(null)
+    const res  = await fetch('/api/admin/delete-staff', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: memberId }),
+    })
+    const json = await res.json() as { error?: string }
+    setDeletingId(null)
+    if (json.error) { setDeleteErr(json.error); return }
+    setStaffList(prev => prev.filter(m => m.id !== memberId))
+    setDeleteConfirmId(null)
   }
 
   const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
@@ -291,6 +310,16 @@ export function SettingsClient({ profileName, profileEmail, profileRole, service
                         {resetPinOk === member.id ? '✓ RESET' : 'RESET PIN'}
                       </button>
                     )}
+                    <button
+                      onClick={() => setDeleteConfirmId(deleteConfirmId === member.id ? null : member.id)}
+                      className="text-[10px] font-bold px-2 py-0.5"
+                      style={{
+                        background: 'transparent', color: '#E8412B',
+                        fontFamily: 'JetBrains Mono, monospace', border: '1px solid #E8412B44', cursor: 'pointer',
+                      }}
+                    >
+                      DELETE
+                    </button>
                   </div>
                 </div>
                 {isResetting && (
@@ -322,10 +351,38 @@ export function SettingsClient({ profileName, profileEmail, profileRole, service
                     {resetPinErr[member.id]}
                   </p>
                 )}
+                {deleteConfirmId === member.id && (
+                  <div className="mt-2 p-2" style={{ background: '#E8412B11', border: '1px solid #E8412B44' }}>
+                    <p className="text-[10px] mb-2" style={{ color: '#E8412B', fontFamily: 'JetBrains Mono, monospace' }}>
+                      Remove {member.name} from team?
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleDeleteStaff(member.id)}
+                        disabled={deletingId === member.id}
+                        className="flex-1 py-1.5 text-[10px] font-bold"
+                        style={{ background: '#E8412B', color: '#fff', fontFamily: 'JetBrains Mono, monospace', border: 'none', cursor: 'pointer', opacity: deletingId === member.id ? 0.5 : 1 }}
+                      >
+                        {deletingId === member.id ? '…' : 'CONFIRM'}
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirmId(null)}
+                        className="flex-1 py-1.5 text-[10px] font-bold"
+                        style={{ background: '#2A2F33', color: '#F2EFEA66', fontFamily: 'JetBrains Mono, monospace', border: 'none', cursor: 'pointer' }}
+                      >
+                        CANCEL
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )
           })}
         </div>
+
+        {deleteErr && (
+          <p className="text-xs" style={{ color: '#E8412B', fontFamily: 'JetBrains Mono, monospace' }}>{deleteErr}</p>
+        )}
 
         {/* Add staff member form */}
         <div className="pt-3" style={{ borderTop: '1px solid #2A2F33' }}>

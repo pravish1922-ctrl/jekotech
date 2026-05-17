@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: updatePinErr.message }, { status: 500 })
   }
 
-  // Update Supabase Auth password to match new PIN so future signInWithPassword works
-  const { error: authUpdateErr } = await db.auth.admin.updateUserById(user.id, { password: newPin })
+  // Update Supabase Auth password — pad to 6 chars to meet Auth minimum
+  const { error: authUpdateErr } = await db.auth.admin.updateUserById(user.id, { password: newPin.padEnd(6, '0') })
   if (authUpdateErr) {
     return NextResponse.json({ error: authUpdateErr.message }, { status: 500 })
   }

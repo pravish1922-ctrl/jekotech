@@ -64,7 +64,7 @@ export function NewBookingDrawer({ open, onClose, clients, vehicles, services, m
   // Step 3 — service + details
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
   const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().slice(0, 10))
-  const [scheduledTime, setScheduledTime] = useState('09:00')
+  const [scheduledTime, setScheduledTime] = useState('08:30')
   const [bayNumber, setBayNumber] = useState('')
   const [selectedMechanicId, setSelectedMechanicId] = useState('')
   const [estimatedCost, setEstimatedCost] = useState('')
@@ -94,7 +94,7 @@ export function NewBookingDrawer({ open, onClose, clients, vehicles, services, m
     setNewVehicleYear(new Date().getFullYear().toString())
     setSelectedServiceIds([])
     setScheduledDate(new Date().toISOString().slice(0, 10))
-    setScheduledTime('09:00')
+    setScheduledTime('08:30')
     setBayNumber('')
     setSelectedMechanicId('')
     setEstimatedCost('')
@@ -149,8 +149,17 @@ export function NewBookingDrawer({ open, onClose, clients, vehicles, services, m
     setStep(3)
   }
 
+  const TIME_SLOTS = ['08:30', '10:30', '13:00', '15:30']
+
+  function isDateTimeValid() {
+    if (!scheduledDate) return false
+    const selected = new Date(`${scheduledDate}T${scheduledTime}:00`)
+    const minTime  = new Date(Date.now() + 60 * 60 * 1000)
+    return selected >= minTime
+  }
+
   function canAdvanceStep3() {
-    return selectedServiceIds.length > 0 && !!scheduledDate
+    return selectedServiceIds.length > 0 && isDateTimeValid()
   }
 
   async function handleCreate() {
@@ -448,15 +457,37 @@ export function NewBookingDrawer({ open, onClose, clients, vehicles, services, m
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <FieldLabel>DATE *</FieldLabel>
-                    <FieldInput value={scheduledDate} onChange={setScheduledDate} type="date" />
+                <div>
+                  <FieldLabel>DATE *</FieldLabel>
+                  <FieldInput value={scheduledDate} onChange={setScheduledDate} type="date" />
+                </div>
+
+                <div>
+                  <FieldLabel>TIME *</FieldLabel>
+                  <div className="grid grid-cols-4 gap-1">
+                    {TIME_SLOTS.map(slot => (
+                      <button
+                        key={slot}
+                        type="button"
+                        onClick={() => setScheduledTime(slot)}
+                        className="py-2 text-xs font-bold"
+                        style={{
+                          background: scheduledTime === slot ? '#FF5A1F' : '#1E2225',
+                          color: scheduledTime === slot ? '#fff' : '#F2EFEA66',
+                          border: scheduledTime === slot ? 'none' : '1px solid #2A2F33',
+                          fontFamily: 'JetBrains Mono, monospace',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {slot}
+                      </button>
+                    ))}
                   </div>
-                  <div>
-                    <FieldLabel>TIME</FieldLabel>
-                    <FieldInput value={scheduledTime} onChange={setScheduledTime} type="time" />
-                  </div>
+                  {scheduledDate && !isDateTimeValid() && (
+                    <p className="text-[10px] mt-1.5 font-bold" style={{ color: '#E8412B', fontFamily: 'JetBrains Mono, monospace' }}>
+                      Please select a future date and time
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

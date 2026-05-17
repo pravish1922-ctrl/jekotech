@@ -15,9 +15,17 @@ export async function createClientForBooking(
   phone: string
 ): Promise<{ data?: { id: string; name: string; phone: string | null }; error?: string }> {
   const db = serviceDb()
+  const clientId = crypto.randomUUID()
   const { data, error } = await db
     .from('clients')
-    .insert({ name, phone: phone || null, role: 'customer', whatsapp_opt_in: false })
+    .insert({
+      id: clientId,
+      name,
+      phone: phone || null,
+      email: `walkin-${clientId}@jekotech.internal`,
+      role: 'customer',
+      whatsapp_opt_in: false,
+    })
     .select('id, name, phone')
     .single()
   if (error) return { error: error.message }
@@ -64,6 +72,9 @@ export async function createWalkinBooking(payload: {
 
   const ref = `JK-${String(Math.floor(1000 + Math.random() * 9000))}`
 
+  const start = new Date(payload.scheduledStart)
+  const scheduledEnd = new Date(start.getTime() + 2 * 60 * 60 * 1000).toISOString()
+
   const { data, error } = await db
     .from('bookings')
     .insert({
@@ -72,6 +83,7 @@ export async function createWalkinBooking(payload: {
       vehicle_id: payload.vehicleId,
       service_ids: payload.serviceIds,
       scheduled_start: payload.scheduledStart,
+      scheduled_end: scheduledEnd,
       bay_number: payload.bayNumber,
       assigned_mechanic_id: payload.mechanicId || null,
       estimated_cost_mur: payload.estimatedCost,

@@ -63,10 +63,10 @@ export async function POST(request: NextRequest) {
 
   const systemEmail = `${username}@staff.jekotech.internal`
 
-  // Create Supabase Auth user
+  // Create Supabase Auth user — pad PIN to 6 chars to meet Auth minimum
   const { data: authData, error: authErr } = await db.auth.admin.createUser({
     email: systemEmail,
-    password: pin,
+    password: pin.padEnd(6, '0'),
     email_confirm: true,
   })
 

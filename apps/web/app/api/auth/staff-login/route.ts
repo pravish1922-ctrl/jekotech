@@ -66,9 +66,11 @@ export async function POST(request: NextRequest) {
   )
 
   const systemEmail = `${username}@staff.jekotech.internal`
+  // Supabase Auth requires ≥6 char passwords; pad short PINs
+  const supabasePassword = pin.padEnd(6, '0')
   const { error: signInError } = await supabase.auth.signInWithPassword({
     email: systemEmail,
-    password: pin,
+    password: supabasePassword,
   })
 
   if (signInError) {

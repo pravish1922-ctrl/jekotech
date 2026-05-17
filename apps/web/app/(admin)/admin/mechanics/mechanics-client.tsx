@@ -1,7 +1,7 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 
 interface MechanicRow {
@@ -25,19 +25,12 @@ interface Props {
 const COLOR_SWATCHES = ['#FF5A1F', '#3B82F6', '#2F9E5A', '#F5C518', '#E8412B', '#8B5CF6']
 
 export function MechanicsClient({ mechanics: initial, isOwner }: Props) {
-  const router = useRouter()
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
   const [mechanics, setMechanics] = useState<MechanicRow[]>(initial)
-  const [inviteName, setInviteName] = useState('')
-  const [inviteEmail, setInviteEmail] = useState('')
-  const [invitePhone, setInvitePhone] = useState('')
-  const [inviting, setInviting] = useState(false)
-  const [inviteError, setInviteError] = useState<string | null>(null)
-  const [inviteSuccess, setInviteSuccess] = useState(false)
   const [togglingId, setTogglingId] = useState<string | null>(null)
 
   // Edit state
@@ -91,36 +84,6 @@ export function MechanicsClient({ mechanics: initial, isOwner }: Props) {
       max_concurrent_jobs: body.max_concurrent_jobs,
     } : m))
     setEditingId(null)
-  }
-
-  async function handleInvite() {
-    if (!inviteEmail.trim() || !inviteName.trim()) return
-    setInviting(true)
-    setInviteError(null)
-
-    const res = await fetch('/api/admin/invite-mechanic', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name:  inviteName.trim(),
-        email: inviteEmail.trim(),
-        phone: invitePhone.trim() || null,
-      }),
-    })
-    const json = await res.json() as { success?: boolean; error?: string }
-
-    setInviting(false)
-    if (!res.ok || json.error) {
-      setInviteError(json.error ?? 'Failed to add mechanic')
-      return
-    }
-
-    setInviteName('')
-    setInviteEmail('')
-    setInvitePhone('')
-    setInviteSuccess(true)
-    setTimeout(() => setInviteSuccess(false), 2000)
-    router.refresh()
   }
 
   async function handleToggle(mech: MechanicRow) {
@@ -338,51 +301,17 @@ export function MechanicsClient({ mechanics: initial, isOwner }: Props) {
         })}
       </div>
 
-      {isOwner && (
-        <div className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33', boxShadow: '4px 4px 0 #0B0D0E' }}>
-          <h2 className="text-[10px] font-bold mb-3" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>
-            ADD MECHANIC
-          </h2>
-          <div className="flex flex-col gap-2">
-            {[
-              { label: 'NAME', value: inviteName, setter: setInviteName, type: 'text', placeholder: 'Full name', mono: false },
-              { label: 'EMAIL', value: inviteEmail, setter: setInviteEmail, type: 'email', placeholder: 'mechanic@example.com', mono: false },
-              { label: 'PHONE (optional)', value: invitePhone, setter: setInvitePhone, type: 'tel', placeholder: '+230 5xxx xxxx', mono: true },
-            ].map(({ label, value, setter, type, placeholder, mono }) => (
-              <div key={label}>
-                <p className="text-[10px] font-bold mb-1" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>{label}</p>
-                <input
-                  type={type}
-                  value={value}
-                  onChange={e => setter(e.target.value)}
-                  className="w-full px-3 py-2 text-sm outline-none"
-                  style={{ background: '#1E2225', border: '1px solid #2A2F33', color: '#F2EFEA', fontFamily: mono ? 'JetBrains Mono, monospace' : 'Inter, sans-serif' }}
-                  placeholder={placeholder}
-                />
-              </div>
-            ))}
-            {inviteError && (
-              <p className="text-xs" style={{ color: '#E8412B', fontFamily: 'JetBrains Mono, monospace' }}>ERROR: {inviteError}</p>
-            )}
-            <button
-              onClick={handleInvite}
-              disabled={inviting || !inviteName.trim() || !inviteEmail.trim()}
-              className="w-full py-2.5 text-sm font-bold mt-1"
-              style={{
-                background: inviteSuccess ? '#2F9E5A' : '#FF5A1F',
-                color: '#fff',
-                fontFamily: 'Space Grotesk, sans-serif',
-                letterSpacing: '0.05em',
-                opacity: inviting || (!inviteName.trim() || !inviteEmail.trim()) ? 0.5 : 1,
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              {inviting ? 'ADDING…' : inviteSuccess ? '✓ ADDED' : 'ADD MECHANIC'}
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33' }}>
+        <p className="text-xs" style={{ color: '#F2EFEA66', fontFamily: 'Inter, sans-serif' }}>
+          To add a mechanic, go to{' '}
+          <Link
+            href="/admin/settings"
+            style={{ color: '#FF5A1F', textDecoration: 'underline' }}
+          >
+            Settings → Team Management
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }
