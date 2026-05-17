@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { NewBookingDrawer } from './new-booking-drawer'
 
 type BookingStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
+type DateFilter = 'all' | 'today' | 'week' | 'month'
 
 const STATUS_STYLE: Record<BookingStatus, { bg: string; color: string; label: string }> = {
   pending:     { bg: '#F5C518', color: '#0B0D0E', label: 'PENDING' },
@@ -32,20 +34,52 @@ function formatDate(iso: string) {
   return sameYear ? `${day} ${mon} · ${time}` : `${day} ${mon} ${d.getFullYear()} · ${time}`
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function AdminBookingsList({ bookings }: { bookings: any[] }) {
+interface Props {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  bookings: any[]
+  allClients: { id: string; name: string; phone: string | null }[]
+  allVehicles: { id: string; registration: string; make: string; model: string; year: number; owner_client_id: string }[]
+  allServices: { id: string; name_en: string; base_price_mur: number }[]
+  allMechanics: { id: string; name: string }[]
+}
+
+export function AdminBookingsList({ bookings, allClients, allVehicles, allServices, allMechanics }: Props) {
   const [tab, setTab] = useState<BookingStatus | 'all'>('all')
   const [search, setSearch] = useState('')
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all')
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
+  const now = new Date()
+  const todayStr = now.toISOString().slice(0, 10)
 
   const filtered = bookings.filter(b => {
     const matchTab = tab === 'all' || b.status === tab
+
     const q = search.toLowerCase()
     const matchSearch = !q ||
       b.reference?.toLowerCase().includes(q) ||
       b.client?.name?.toLowerCase().includes(q) ||
+      b.client?.phone?.toLowerCase().includes(q) ||
       b.vehicle?.registration?.toLowerCase().includes(q) ||
       b.vehicle?.make?.toLowerCase().includes(q)
-    return matchTab && matchSearch
+
+    let matchDate = true
+    if (dateFilter !== 'all' && b.scheduled_start) {
+      const bDate = new Date(b.scheduled_start)
+      if (dateFilter === 'today') {
+        matchDate = b.scheduled_start.slice(0, 10) === todayStr
+      } else if (dateFilter === 'week') {
+        const weekAgo = new Date(now)
+        weekAgo.setDate(weekAgo.getDate() - 7)
+        matchDate = bDate >= weekAgo
+      } else if (dateFilter === 'month') {
+        matchDate = bDate.getFullYear() === now.getFullYear() && bDate.getMonth() === now.getMonth()
+      }
+    } else if (dateFilter !== 'all' && !b.scheduled_start) {
+      matchDate = false
+    }
+
+    return matchTab && matchSearch && matchDate
   })
 
   const counts: Record<string, number> = { all: bookings.length }
@@ -71,16 +105,32 @@ export function AdminBookingsList({ bookings }: { bookings: any[] }) {
             {bookings.length} TOTAL
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => window.open('/admin/bookings/print', '_blank')}
+            className="px-3 py-1.5 text-[10px] font-bold"
+            style={{ background: '#15181A', border: '1px solid #2A2F33', color: '#F2EFEA66', fontFamily: 'JetBrains Mono, monospace', cursor: 'pointer' }}
+          >
+            PRINT TODAY
+          </button>
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="px-3 py-1.5 text-[10px] font-bold"
+            style={{ background: '#FF5A1F', color: '#fff', fontFamily: 'JetBrains Mono, monospace', border: 'none', cursor: 'pointer' }}
+          >
+            + NEW BOOKING
+          </button>
+        </div>
       </div>
 
-      {/* Search */}
-      <div className="px-6 py-4">
+      {/* Search + date filter */}
+      <div className="px-6 py-4 flex gap-2">
         <input
           type="text"
-          placeholder="Search reference, client, vehicle…"
+          placeholder="Search ref, client, phone, vehicle…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full px-4 py-2.5 text-sm outline-none"
+          className="flex-1 px-4 py-2.5 text-sm outline-none"
           style={{
             background: '#15181A',
             border: '1px solid #2A2F33',
@@ -88,6 +138,17 @@ export function AdminBookingsList({ bookings }: { bookings: any[] }) {
             fontFamily: 'Inter, sans-serif',
           }}
         />
+        <select
+          value={dateFilter}
+          onChange={e => setDateFilter(e.target.value as DateFilter)}
+          className="px-3 py-2 text-[11px] outline-none"
+          style={{ background: '#15181A', border: '1px solid #2A2F33', color: '#F2EFEA', fontFamily: 'JetBrains Mono, monospace' }}
+        >
+          <option value="all">ALL TIME</option>
+          <option value="today">TODAY</option>
+          <option value="week">THIS WEEK</option>
+          <option value="month">THIS MONTH</option>
+        </select>
       </div>
 
       {/* Tabs */}
@@ -105,6 +166,7 @@ export function AdminBookingsList({ bookings }: { bookings: any[] }) {
                 color: active ? '#fff' : '#F2EFEA66',
                 border: active ? 'none' : '1px solid #2A2F33',
                 fontFamily: 'JetBrains Mono, monospace',
+                cursor: 'pointer',
               }}
             >
               {t.label}
@@ -213,6 +275,16 @@ export function AdminBookingsList({ bookings }: { bookings: any[] }) {
           )
         })}
       </div>
+
+      {/* Walk-in booking drawer */}
+      <NewBookingDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        clients={allClients}
+        vehicles={allVehicles}
+        services={allServices}
+        mechanics={allMechanics}
+      />
     </div>
   )
 }

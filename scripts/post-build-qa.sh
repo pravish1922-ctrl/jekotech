@@ -23,11 +23,13 @@ for page in $ADMIN_PAGES; do
   fi
 done
 
-# Check 3: No mechanics table columns that don't exist
-if grep -rn "mechanics.*name\|mechanics.*email\|mechanics.*phone" \
-   apps/web/app apps/web/lib 2>/dev/null | grep -v "clients"; then
-  echo "FAIL: Code references non-existent mechanics columns (name/email/phone)"
-  echo "These columns only exist in clients table"
+# Check 3: No mechanics DB queries that reference non-existent columns
+# (name, email, phone live in clients — use clients(name) join)
+if grep -rn "from.*mechanics" apps/web/app apps/web/lib 2>/dev/null | \
+   grep -E "select.*['\"].*name|select.*email|select.*phone" | \
+   grep -v "clients(name)"; then
+  echo "FAIL: Supabase mechanics query selects name/email/phone directly"
+  echo "These columns only exist in clients table — use clients(name) join"
   FAIL=1
 fi
 

@@ -51,9 +51,10 @@ export async function POST(request: NextRequest) {
   }
 
   // Create new client record with role='mechanic'
+  const newId = crypto.randomUUID()
   const { data: newClient, error: clientErr } = await db
     .from('clients')
-    .insert({ email, name, role: 'mechanic', whatsapp_opt_in: false })
+    .insert({ id: newId, email, name, role: 'mechanic', whatsapp_opt_in: false })
     .select('id')
     .single()
 

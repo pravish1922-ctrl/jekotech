@@ -31,7 +31,7 @@ function formatDate(iso: string) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function MechanicJobsClient({ jobs, mechanicId }: { jobs: any[]; mechanicId: string }) {
-  const [tab, setTab] = useState<'active' | 'done'>('active')
+  const [tab, setTab] = useState<'active' | 'done' | 'cancelled'>('active')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [localJobs, setLocalJobs] = useState<any[]>(jobs)
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -45,9 +45,10 @@ export function MechanicJobsClient({ jobs, mechanicId }: { jobs: any[]; mechanic
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  const activeJobs = localJobs.filter(j => ['pending', 'confirmed', 'in_progress'].includes(j.status))
-  const doneJobs   = localJobs.filter(j => ['completed', 'cancelled'].includes(j.status))
-  const displayed  = tab === 'active' ? activeJobs : doneJobs
+  const activeJobs    = localJobs.filter(j => ['pending', 'confirmed', 'in_progress'].includes(j.status))
+  const doneJobs      = localJobs.filter(j => j.status === 'completed')
+  const cancelledJobs = localJobs.filter(j => j.status === 'cancelled')
+  const displayed     = tab === 'active' ? activeJobs : tab === 'done' ? doneJobs : cancelledJobs
 
   async function handleStatusChange(jobId: string, newStatus: JobStatus) {
     setSavingId(jobId)
@@ -73,6 +74,18 @@ export function MechanicJobsClient({ jobs, mechanicId }: { jobs: any[]; mechanic
     }
   }
 
+  const TABS = [
+    { key: 'active'    as const, label: `ACTIVE (${activeJobs.length})` },
+    { key: 'done'      as const, label: `DONE (${doneJobs.length})` },
+    { key: 'cancelled' as const, label: `CANCELLED (${cancelledJobs.length})` },
+  ]
+
+  const EMPTY: Record<typeof tab, string> = {
+    active:    'NO ACTIVE JOBS',
+    done:      'NO COMPLETED JOBS',
+    cancelled: 'NO CANCELLED JOBS',
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#0B0D0E', paddingBottom: 32 }}>
       {/* Header */}
@@ -87,25 +100,25 @@ export function MechanicJobsClient({ jobs, mechanicId }: { jobs: any[]; mechanic
           MY JOBS
         </h1>
         <p className="text-xs mt-0.5" style={{ color: '#F2EFEA66', fontFamily: 'JetBrains Mono, monospace' }}>
-          {activeJobs.length} ACTIVE · {doneJobs.length} DONE
+          {activeJobs.length} ACTIVE · {doneJobs.length} DONE · {cancelledJobs.length} CANCELLED
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="px-6 pt-4 flex gap-2">
-        {(['active', 'done'] as const).map(t => (
+      <div className="px-6 pt-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        {TABS.map(t => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
-            className="px-4 py-1.5 text-xs font-bold"
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className="flex-shrink-0 px-4 py-1.5 text-xs font-bold"
             style={{
-              background: tab === t ? '#FF5A1F' : '#15181A',
-              color: tab === t ? '#fff' : '#F2EFEA66',
-              border: tab === t ? 'none' : '1px solid #2A2F33',
+              background: tab === t.key ? '#FF5A1F' : '#15181A',
+              color: tab === t.key ? '#fff' : '#F2EFEA66',
+              border: tab === t.key ? 'none' : '1px solid #2A2F33',
               fontFamily: 'JetBrains Mono, monospace',
             }}
           >
-            {t === 'active' ? `ACTIVE (${activeJobs.length})` : `DONE (${doneJobs.length})`}
+            {t.label}
           </button>
         ))}
       </div>
@@ -114,7 +127,7 @@ export function MechanicJobsClient({ jobs, mechanicId }: { jobs: any[]; mechanic
       <div className="px-6 mt-4 flex flex-col gap-3">
         {displayed.length === 0 && (
           <p className="text-center py-16 text-sm" style={{ color: '#F2EFEA33', fontFamily: 'JetBrains Mono, monospace' }}>
-            {tab === 'active' ? 'NO ACTIVE JOBS' : 'NO COMPLETED JOBS'}
+            {EMPTY[tab]}
           </p>
         )}
 
@@ -124,6 +137,7 @@ export function MechanicJobsClient({ jobs, mechanicId }: { jobs: any[]; mechanic
           const nextStatus = MECHANIC_TRANSITIONS[status]
           const isExpanded = expandedId === job.id
           const isSaving = savingId === job.id
+          const isCancelled = status === 'cancelled'
 
           return (
             <div
@@ -132,6 +146,7 @@ export function MechanicJobsClient({ jobs, mechanicId }: { jobs: any[]; mechanic
                 background: '#15181A',
                 border: '1px solid #2A2F33',
                 boxShadow: '4px 4px 0 #0B0D0E',
+                opacity: isCancelled ? 0.6 : 1,
               }}
             >
               {/* Card header — always visible */}
@@ -266,8 +281,8 @@ export function MechanicJobsClient({ jobs, mechanicId }: { jobs: any[]; mechanic
                     </button>
                   </div>
 
-                  {/* Status action button */}
-                  {nextStatus && (
+                  {/* Status action button — not shown for cancelled jobs */}
+                  {nextStatus && !isCancelled && (
                     <button
                       onClick={() => handleStatusChange(job.id, nextStatus)}
                       disabled={isSaving}

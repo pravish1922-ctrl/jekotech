@@ -52,24 +52,25 @@ export function MechanicTopBar({ userName }: MechanicTopBarProps) {
         </div>
       </div>
 
-      {/* Right — user + sign out */}
+      {/* Right — identity + sign out */}
       <div className="flex items-center gap-3">
-        <div className="hidden sm:block text-sm" style={{ color: '#F2EFEA99', fontFamily: 'Inter, sans-serif' }}>
-          {userName}
-        </div>
-        <span
-          className="text-[10px] font-bold px-2 py-0.5"
-          style={{ background: '#3B82F6', color: '#fff', fontFamily: 'JetBrains Mono, monospace' }}
+        <div
+          className="flex items-center justify-center flex-shrink-0"
+          style={{ width: 28, height: 28, background: '#3B82F6' }}
         >
-          MECHANIC
+          <span className="text-xs font-bold" style={{ color: '#fff', fontFamily: 'Space Grotesk, sans-serif' }}>
+            {initials}
+          </span>
+        </div>
+        <span className="hidden sm:block text-sm" style={{ color: '#F2EFEA', fontFamily: 'Inter, sans-serif' }}>
+          {userName}
         </span>
         <button
           onClick={handleSignOut}
-          className="flex items-center justify-center w-8 h-8 text-xs font-bold"
-          style={{ background: '#E8412B', color: '#fff', fontFamily: 'JetBrains Mono, monospace', cursor: 'pointer' }}
-          title="Sign out"
+          className="px-3 py-1 text-[10px] font-bold"
+          style={{ background: '#E8412B', color: '#fff', fontFamily: 'JetBrains Mono, monospace', cursor: 'pointer', border: 'none' }}
         >
-          {initials}
+          SIGN OUT
         </button>
       </div>
     </header>

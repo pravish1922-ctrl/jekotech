@@ -41,9 +41,9 @@ export default async function AdminBookingsPage() {
   }
 
   const { data: clients }      = await supabase.from('clients').select('id, name, email, phone')
-  const { data: vehicles }     = await supabase.from('vehicles').select('id, registration, make, model, year')
+  const { data: vehicles }     = await supabase.from('vehicles').select('id, registration, make, model, year, owner_client_id')
   const { data: services }     = await supabase.from('services').select('id, name_en, base_price_mur')
-  const { data: mechanicsRaw } = await supabase.from('mechanics').select('id, clients(name)')
+  const { data: mechanicsRaw } = await supabase.from('mechanics').select('id, clients(name)').eq('active', true)
 
   type MechanicWithClient = { id: string; clients: { name: string } | null }
   const mechanics = ((mechanicsRaw ?? []) as unknown as MechanicWithClient[])
@@ -62,5 +62,13 @@ export default async function AdminBookingsPage() {
     mechanic: b.assigned_mechanic_id ? (mechanicMap[b.assigned_mechanic_id] ?? null) : null,
   }))
 
-  return <AdminBookingsList bookings={enriched} />
+  return (
+    <AdminBookingsList
+      bookings={enriched}
+      allClients={(clients ?? []) as { id: string; name: string; phone: string | null }[]}
+      allVehicles={(vehicles ?? []) as { id: string; registration: string; make: string; model: string; year: number; owner_client_id: string }[]}
+      allServices={(services ?? []) as { id: string; name_en: string; base_price_mur: number }[]}
+      allMechanics={mechanics}
+    />
+  )
 }
