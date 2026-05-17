@@ -3,6 +3,11 @@ import { createServerSupabaseClient } from '../../../../../lib/supabase-server'
 import { notFound } from 'next/navigation'
 import { BookingDetailEditor } from './booking-detail-editor'
 
+type MechanicWithClient = {
+  id: string
+  clients: { name: string } | null
+}
+
 function serviceDb() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,19 +34,22 @@ export default async function AdminBookingDetailPage({ params }: { params: { id:
     { data: client },
     { data: vehicle },
     { data: services },
-    { data: mechanics },
+    { data: mechanicsRaw },
     { data: currentClient },
   ] = await Promise.all([
     supabase.from('clients').select('id, name, email, phone').eq('id', booking.client_id).single(),
     supabase.from('vehicles').select('id, registration, make, model, year, colour, mileage').eq('id', booking.vehicle_id).single(),
     supabase.from('services').select('id, name_en, base_price_mur, estimated_duration_min'),
-    supabase.from('mechanics').select('id, name'),
+    supabase.from('mechanics').select('id, clients(name)').eq('active', true),
     supabase.from('clients').select('role').eq('id', user.id).single(),
   ])
 
+  const mechanics = ((mechanicsRaw ?? []) as unknown as MechanicWithClient[])
+    .map(m => ({ id: m.id, name: m.clients?.name ?? '(unknown)' }))
+
   const serviceMap = Object.fromEntries((services ?? []).map(s => [s.id, s]))
   const bookingServices = (booking.service_ids ?? []).map((id: string) => serviceMap[id]).filter(Boolean)
-  const assignedMechanic = (mechanics ?? []).find(m => m.id === booking.assigned_mechanic_id) ?? null
+  const assignedMechanic = mechanics.find(m => m.id === booking.assigned_mechanic_id) ?? null
 
   return (
     <BookingDetailEditor
@@ -50,7 +58,7 @@ export default async function AdminBookingDetailPage({ params }: { params: { id:
       vehicle={vehicle}
       bookingServices={bookingServices}
       allServices={services ?? []}
-      mechanics={mechanics ?? []}
+      mechanics={mechanics}
       assignedMechanic={assignedMechanic}
       currentRole={currentClient?.role ?? 'staff'}
     />

@@ -25,6 +25,7 @@ export function MechanicTopBar({ userName }: MechanicTopBarProps) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
     await supabase.auth.signOut()
+    document.cookie = 'preview_mode=; max-age=0; path=/'
     router.push('/login')
   }
 
@@ -65,8 +66,8 @@ export function MechanicTopBar({ userName }: MechanicTopBarProps) {
         <button
           onClick={handleSignOut}
           className="flex items-center justify-center w-8 h-8 text-xs font-bold"
-          style={{ background: '#E8412B', color: '#fff', fontFamily: 'JetBrains Mono, monospace' }}
-          title="TAP TO SIGN OUT"
+          style={{ background: '#E8412B', color: '#fff', fontFamily: 'JetBrains Mono, monospace', cursor: 'pointer' }}
+          title="Sign out"
         >
           {initials}
         </button>

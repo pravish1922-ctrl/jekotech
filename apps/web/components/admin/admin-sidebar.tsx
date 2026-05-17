@@ -38,6 +38,7 @@ export function AdminSidebar({ role, userName, initials }: AdminSidebarProps) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
     await supabase.auth.signOut()
+    document.cookie = 'preview_mode=; max-age=0; path=/'
     router.push('/login')
   }
 

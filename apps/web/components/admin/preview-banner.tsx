@@ -1,16 +1,24 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+
+const AUTH_PATHS = ['/login', '/signup', '/otp', '/forgot', '/auth']
 
 export function PreviewBanner() {
   const router = useRouter()
+  const pathname = usePathname()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
+    // Don't show on auth pages (login, signup, otp, forgot)
+    if (AUTH_PATHS.some(p => pathname.startsWith(p))) return
+    // Don't show inside iframe (admin preview phone mockup)
+    if (window.self !== window.top) return
+
     const hasPreview = document.cookie.split(';').some(c => c.trim().startsWith('preview_mode=true'))
     setVisible(hasPreview)
-  }, [])
+  }, [pathname])
 
   function exitPreview() {
     document.cookie = 'preview_mode=; max-age=0; path=/'

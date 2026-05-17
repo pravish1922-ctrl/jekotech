@@ -40,15 +40,19 @@ export default async function AdminBookingsPage() {
     )
   }
 
-  const { data: clients }   = await supabase.from('clients').select('id, name, email, phone')
-  const { data: vehicles }  = await supabase.from('vehicles').select('id, registration, make, model, year')
-  const { data: services }  = await supabase.from('services').select('id, name_en, base_price_mur')
-  const { data: mechanics } = await supabase.from('mechanics').select('id, name')
+  const { data: clients }      = await supabase.from('clients').select('id, name, email, phone')
+  const { data: vehicles }     = await supabase.from('vehicles').select('id, registration, make, model, year')
+  const { data: services }     = await supabase.from('services').select('id, name_en, base_price_mur')
+  const { data: mechanicsRaw } = await supabase.from('mechanics').select('id, clients(name)')
 
-  const clientMap   = Object.fromEntries((clients   ?? []).map(c => [c.id, c]))
-  const vehicleMap  = Object.fromEntries((vehicles  ?? []).map(v => [v.id, v]))
-  const serviceMap  = Object.fromEntries((services  ?? []).map(s => [s.id, s]))
-  const mechanicMap = Object.fromEntries((mechanics ?? []).map(m => [m.id, m]))
+  type MechanicWithClient = { id: string; clients: { name: string } | null }
+  const mechanics = ((mechanicsRaw ?? []) as unknown as MechanicWithClient[])
+    .map(m => ({ id: m.id, name: m.clients?.name ?? '(unknown)' }))
+
+  const clientMap   = Object.fromEntries((clients ?? []).map(c => [c.id, c]))
+  const vehicleMap  = Object.fromEntries((vehicles ?? []).map(v => [v.id, v]))
+  const serviceMap  = Object.fromEntries((services ?? []).map(s => [s.id, s]))
+  const mechanicMap = Object.fromEntries(mechanics.map(m => [m.id, m]))
 
   const enriched = (bookings ?? []).map(b => ({
     ...b,
