@@ -10,12 +10,15 @@ export default async function MechanicLayout({ children }: { children: React.Rea
 
   const { data: clientRow } = await supabase
     .from('clients')
-    .select('name, role')
+    .select('name, role, username')
     .eq('id', user.id)
     .single()
 
-  const role     = (clientRow as { name: string; role: string } | null)?.role ?? null
-  const fullName = (clientRow as { name: string; role: string } | null)?.name ?? ''
+  type ClientRow = { name: string; role: string; username: string | null }
+  const row      = clientRow as ClientRow | null
+  const role     = row?.role ?? null
+  const fullName = row?.name ?? ''
+  const username = row?.username ?? null
 
   if (role !== 'mechanic') {
     redirect('/home')
@@ -23,7 +26,7 @@ export default async function MechanicLayout({ children }: { children: React.Rea
 
   return (
     <div className="min-h-screen bg-ink text-bone">
-      <MechanicTopBar userName={fullName} />
+      <MechanicTopBar userName={fullName} username={username} />
       <main style={{ paddingTop: 52 }}>
         {children}
       </main>

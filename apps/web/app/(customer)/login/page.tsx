@@ -231,15 +231,27 @@ export default function LoginPage() {
       </div>
 
       {/* Footer */}
-      <p className="mt-auto pt-10 text-center font-mono text-[11px] tracking-mono uppercase text-steel3">
-        New here?{' '}
-        <Link
-          href="/signup"
-          className="text-orange hover:text-orangeDeep underline underline-offset-2 transition-colors duration-120"
-        >
-          Open an Account
-        </Link>
-      </p>
+      <div className="mt-auto pt-10 flex flex-col items-center gap-2">
+        <p className="text-center font-mono text-[11px] tracking-mono uppercase text-steel3">
+          New here?{' '}
+          <Link
+            href="/signup"
+            className="text-orange hover:text-orangeDeep underline underline-offset-2 transition-colors duration-120"
+          >
+            Open an Account
+          </Link>
+        </p>
+        <p className="text-center font-mono text-[11px] tracking-mono text-steel3">
+          Staff?{' '}
+          <Link
+            href="/staff-login"
+            className="hover:text-bone transition-colors duration-120"
+            style={{ color: '#F2EFEA44' }}
+          >
+            → Staff portal
+          </Link>
+        </p>
+      </div>
     </main>
   )
 }

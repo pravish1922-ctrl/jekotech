@@ -10,6 +10,7 @@ interface AdminSidebarProps {
   role: AdminRole
   userName: string
   initials: string
+  username: string | null
 }
 
 const NAV = [
@@ -26,7 +27,7 @@ const ROLE_BADGE: Record<AdminRole, { label: string; bg: string; color: string }
   staff:    { label: 'Staff',    bg: '#2A2F33', color: '#F2EFEA' },
 }
 
-export function AdminSidebar({ role, userName, initials }: AdminSidebarProps) {
+export function AdminSidebar({ role, userName, initials, username }: AdminSidebarProps) {
   const pathname = usePathname()
   const router   = useRouter()
   const badge    = ROLE_BADGE[role]
@@ -161,6 +162,15 @@ export function AdminSidebar({ role, userName, initials }: AdminSidebarProps) {
               >
                 {badge.label.toUpperCase()}
               </span>
+              {username && (
+                <Link
+                  href="/staff-change-pin"
+                  className="block text-[10px] mt-1"
+                  style={{ color: '#F2EFEA60', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.06em' }}
+                >
+                  CHANGE PIN
+                </Link>
+              )}
             </div>
           </div>
         </div>

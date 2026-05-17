@@ -35,12 +35,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const { data: clientRaw } = await db
     .from('clients')
-    .select('name, role')
+    .select('name, role, username')
     .eq('id', user.id)
     .single()
 
-  const role     = (clientRaw as { name: string; role: string } | null)?.role ?? null
-  const fullName = (clientRaw as { name: string; role: string } | null)?.name ?? ''
+  type ClientRow = { name: string; role: string; username: string | null }
+  const row      = clientRaw as ClientRow | null
+  const role     = row?.role ?? null
+  const fullName = row?.name ?? ''
+  const username = row?.username ?? null
 
   if (!role || !ADMIN_ROLES.has(role)) {
     redirect(roleHome(role))
@@ -52,6 +55,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         role={role as AdminRole}
         userName={fullName}
         initials={getInitials(fullName)}
+        username={username}
       />
 
       {/* Desktop: offset by sidebar width. Mobile: offset by top bar + bottom nav */}

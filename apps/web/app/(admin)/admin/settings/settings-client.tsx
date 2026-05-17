@@ -14,6 +14,7 @@ interface GarageConfig {
   phone: string
   email: string
 }
+interface StaffMember { id: string; name: string; username: string | null; role: string }
 
 interface Props {
   profileName: string
@@ -21,6 +22,7 @@ interface Props {
   profileRole: string
   services: ServiceRow[]
   garageConfig: GarageConfig
+  staffMembers: StaffMember[]
 }
 
 const LABEL_STYLE = { color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' } as const
@@ -56,7 +58,7 @@ function SaveBtn({ saving, saved, label = 'SAVE', onClick, disabled }: {
   )
 }
 
-export function SettingsClient({ profileName, profileEmail, profileRole, services: initial, garageConfig: gc }: Props) {
+export function SettingsClient({ profileName, profileEmail, profileRole, services: initial, garageConfig: gc, staffMembers: initialStaff }: Props) {
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -185,6 +187,61 @@ export function SettingsClient({ profileName, profileEmail, profileRole, service
     setPassSaved(true); setTimeout(() => setPassSaved(false), 2000)
   }
 
+  // ── Team management ─────────────────────────────────────────────────────────
+  const [staffList, setStaffList]   = useState<StaffMember[]>(initialStaff)
+  const [newStaffName, setNewStaffName]     = useState('')
+  const [newStaffUser, setNewStaffUser]     = useState('')
+  const [newStaffRole, setNewStaffRole]     = useState('staff')
+  const [newStaffPin,  setNewStaffPin]      = useState('')
+  const [addingStaff,  setAddingStaff]      = useState(false)
+  const [addStaffErr,  setAddStaffErr]      = useState<string | null>(null)
+  const [addStaffOk,   setAddStaffOk]       = useState(false)
+
+  const [resetPinId,   setResetPinId]       = useState<string | null>(null)
+  const [resetPinVal,  setResetPinVal]      = useState('')
+  const [resettingPin, setResettingPin]     = useState<string | null>(null)
+  const [resetPinErr,  setResetPinErr]      = useState<Record<string, string>>({})
+  const [resetPinOk,   setResetPinOk]       = useState<string | null>(null)
+
+  async function handleAddStaff() {
+    if (!newStaffName.trim() || !newStaffUser.trim() || !newStaffPin.trim()) return
+    setAddingStaff(true); setAddStaffErr(null); setAddStaffOk(false)
+    const res  = await fetch('/api/admin/create-staff', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newStaffName.trim(), username: newStaffUser.trim(), role: newStaffRole, pin: newStaffPin.trim() }),
+    })
+    const json = await res.json() as { error?: string; id?: string }
+    setAddingStaff(false)
+    if (json.error) { setAddStaffErr(json.error); return }
+    setStaffList(prev => [...prev, { id: json.id!, name: newStaffName.trim(), username: newStaffUser.trim().toLowerCase(), role: newStaffRole }])
+    setNewStaffName(''); setNewStaffUser(''); setNewStaffPin(''); setNewStaffRole('staff')
+    setAddStaffOk(true); setTimeout(() => setAddStaffOk(false), 2000)
+  }
+
+  async function handleResetPin(memberId: string) {
+    if (!resetPinVal.trim()) return
+    setResettingPin(memberId)
+    setResetPinErr(prev => ({ ...prev, [memberId]: '' }))
+    const res  = await fetch('/api/admin/reset-staff-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: memberId, new_pin: resetPinVal.trim() }),
+    })
+    const json = await res.json() as { error?: string }
+    setResettingPin(null)
+    if (json.error) { setResetPinErr(prev => ({ ...prev, [memberId]: json.error! })); return }
+    setResetPinId(null); setResetPinVal('')
+    setResetPinOk(memberId); setTimeout(() => setResetPinOk(ok => ok === memberId ? null : ok), 2000)
+  }
+
+  const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
+    owner:    { bg: '#FF5A1F', color: '#fff' },
+    delegate: { bg: '#F5C518', color: '#0B0D0E' },
+    staff:    { bg: '#2A2F33', color: '#F2EFEA' },
+    mechanic: { bg: '#3B82F6', color: '#fff' },
+  }
+
   const DAY_KEYS: { key: 'mon_fri' | 'sun' | 'sat'; label: string }[] = [
     { key: 'mon_fri', label: 'MON – FRI' },
     { key: 'sun',     label: 'SUNDAY' },
@@ -193,6 +250,119 @@ export function SettingsClient({ profileName, profileEmail, profileRole, service
 
   return (
     <div className="px-6 mt-6 max-w-lg flex flex-col gap-4">
+
+      {/* Team Management */}
+      <div className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33', boxShadow: '4px 4px 0 #0B0D0E' }}>
+        <SectionHead title="TEAM MANAGEMENT" />
+
+        {/* Staff list */}
+        <div className="flex flex-col gap-2 mb-4">
+          {staffList.map(member => {
+            const badge = ROLE_COLORS[member.role] ?? { bg: '#2A2F33', color: '#F2EFEA' }
+            const isResetting = resetPinId === member.id
+            return (
+              <div key={member.id} className="p-3" style={{ background: '#1E2225', border: '1px solid #2A2F33' }}>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate" style={{ color: '#F2EFEA', fontFamily: 'Inter, sans-serif' }}>
+                      {member.name}
+                    </div>
+                    {member.username && (
+                      <div className="text-[10px] mt-0.5" style={{ color: '#F2EFEA44', fontFamily: 'JetBrains Mono, monospace' }}>
+                        @{member.username}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5"
+                      style={{ background: badge.bg, color: badge.color, fontFamily: 'JetBrains Mono, monospace' }}>
+                      {member.role.toUpperCase()}
+                    </span>
+                    {member.username && (
+                      <button
+                        onClick={() => { setResetPinId(isResetting ? null : member.id); setResetPinVal('') }}
+                        className="text-[10px] font-bold px-2 py-0.5"
+                        style={{
+                          background: resetPinOk === member.id ? '#2F9E5A22' : '#2A2F33',
+                          color: resetPinOk === member.id ? '#2F9E5A' : '#F2EFEA66',
+                          fontFamily: 'JetBrains Mono, monospace', border: 'none', cursor: 'pointer',
+                        }}
+                      >
+                        {resetPinOk === member.id ? '✓ RESET' : 'RESET PIN'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {isResetting && (
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      value={resetPinVal}
+                      onChange={e => setResetPinVal(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                      placeholder="New PIN (4–6 digits)"
+                      className="flex-1 px-3 py-1.5 text-sm outline-none"
+                      style={{ background: '#15181A', border: '1px solid #2A2F33', color: '#F2EFEA', fontFamily: 'JetBrains Mono, monospace' }}
+                    />
+                    <button
+                      onClick={() => handleResetPin(member.id)}
+                      disabled={resettingPin === member.id || resetPinVal.length < 4}
+                      className="px-3 py-1.5 text-[10px] font-bold"
+                      style={{
+                        background: '#FF5A1F', color: '#fff', fontFamily: 'JetBrains Mono, monospace',
+                        border: 'none', cursor: 'pointer', opacity: resettingPin === member.id || resetPinVal.length < 4 ? 0.5 : 1,
+                      }}
+                    >
+                      {resettingPin === member.id ? '…' : 'SET'}
+                    </button>
+                  </div>
+                )}
+                {resetPinErr[member.id] && (
+                  <p className="text-[10px] mt-1" style={{ color: '#E8412B', fontFamily: 'JetBrains Mono, monospace' }}>
+                    {resetPinErr[member.id]}
+                  </p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Add staff member form */}
+        <div className="pt-3" style={{ borderTop: '1px solid #2A2F33' }}>
+          <p className="text-[10px] font-bold mb-2" style={LABEL_STYLE}>ADD STAFF MEMBER</p>
+          <div className="flex flex-col gap-2">
+            <input type="text" value={newStaffName} onChange={e => setNewStaffName(e.target.value)}
+              className="w-full px-3 py-2 text-sm outline-none" style={INPUT_STYLE}
+              placeholder="Full name" />
+            <input type="text" value={newStaffUser}
+              onChange={e => setNewStaffUser(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+              className="w-full px-3 py-2 text-sm outline-none" style={MONO_INPUT}
+              placeholder="username" autoCapitalize="none" />
+            <select value={newStaffRole} onChange={e => setNewStaffRole(e.target.value)}
+              className="w-full px-3 py-2 text-sm outline-none" style={INPUT_STYLE}>
+              <option value="staff">Staff</option>
+              <option value="delegate">Delegate</option>
+              <option value="mechanic">Mechanic</option>
+            </select>
+            <input type="password" inputMode="numeric" value={newStaffPin}
+              onChange={e => setNewStaffPin(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+              className="w-full px-3 py-2 text-sm outline-none" style={MONO_INPUT}
+              placeholder="Temp PIN (4–6 digits)" />
+            {addStaffErr && <p className="text-xs" style={{ color: '#E8412B', fontFamily: 'JetBrains Mono, monospace' }}>{addStaffErr}</p>}
+            <button onClick={handleAddStaff}
+              disabled={addingStaff || !newStaffName.trim() || !newStaffUser.trim() || newStaffPin.length < 4}
+              className="w-full py-2 text-sm font-bold"
+              style={{
+                background: addStaffOk ? '#2F9E5A' : '#FF5A1F', color: '#fff',
+                fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.05em',
+                opacity: addingStaff || !newStaffName.trim() || !newStaffUser.trim() || newStaffPin.length < 4 ? 0.5 : 1,
+                border: 'none', cursor: 'pointer',
+              }}>
+              {addingStaff ? 'ADDING…' : addStaffOk ? '✓ ADDED' : '+ ADD STAFF MEMBER'}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Account */}
       <div className="p-4" style={{ background: '#15181A', border: '1px solid #2A2F33', boxShadow: '4px 4px 0 #0B0D0E' }}>

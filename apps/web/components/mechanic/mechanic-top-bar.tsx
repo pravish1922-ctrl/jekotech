@@ -1,10 +1,12 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 
 interface MechanicTopBarProps {
   userName: string
+  username: string | null
 }
 
 function getInitials(name: string): string {
@@ -15,7 +17,7 @@ function getInitials(name: string): string {
   return (parts[0]?.[0] ?? '?').toUpperCase()
 }
 
-export function MechanicTopBar({ userName }: MechanicTopBarProps) {
+export function MechanicTopBar({ userName, username }: MechanicTopBarProps) {
   const router = useRouter()
   const initials = getInitials(userName)
 
@@ -65,6 +67,15 @@ export function MechanicTopBar({ userName }: MechanicTopBarProps) {
         <span className="hidden sm:block text-sm" style={{ color: '#F2EFEA', fontFamily: 'Inter, sans-serif' }}>
           {userName}
         </span>
+        {username && (
+          <Link
+            href="/staff-change-pin"
+            className="px-3 py-1 text-[10px] font-bold"
+            style={{ color: '#F2EFEA60', fontFamily: 'JetBrains Mono, monospace', textDecoration: 'none' }}
+          >
+            CHANGE PIN
+          </Link>
+        )}
         <button
           onClick={handleSignOut}
           className="px-3 py-1 text-[10px] font-bold"

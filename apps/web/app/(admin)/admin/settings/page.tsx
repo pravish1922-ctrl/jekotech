@@ -44,9 +44,10 @@ export default async function AdminSettingsPage() {
 
   if (!clientRow || clientRow.role !== 'owner') redirect('/admin/bookings')
 
-  const [{ data: services }, { data: gc }] = await Promise.all([
+  const [{ data: services }, { data: gc }, { data: staffList }] = await Promise.all([
     supabase.from('services').select('id, name_en, base_price_mur, active').order('name_en'),
     supabase.from('garage_config').select('*').eq('id', 1).maybeSingle(),
+    supabase.from('clients').select('id, name, username, role').not('role', 'eq', 'customer').order('name'),
   ])
 
   const garageConfig = {
@@ -76,6 +77,7 @@ export default async function AdminSettingsPage() {
         profileRole={clientRow.role ?? 'owner'}
         services={services ?? []}
         garageConfig={garageConfig}
+        staffMembers={staffList ?? []}
       />
     </div>
   )
