@@ -44,7 +44,7 @@ export default function VehicleHistoryPage() {
     sb.from('bookings')
       .select('reference, service_ids, scheduled_start, final_cost_mur')
       .eq('vehicle_id', vehicleId)
-      .eq('status', 'complete')
+      .eq('status', 'completed')
       .order('scheduled_start', { ascending: false })
       .limit(4)
       .then(async ({ data }) => {

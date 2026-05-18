@@ -189,9 +189,10 @@ export function SettingsClient({ profileName, profileEmail, profileRole, service
 
   // ── Team management ─────────────────────────────────────────────────────────
   const [staffList, setStaffList]   = useState<StaffMember[]>(initialStaff)
-  const [newStaffName, setNewStaffName]     = useState('')
-  const [newStaffUser, setNewStaffUser]     = useState('')
-  const [newStaffRole, setNewStaffRole]     = useState('staff')
+  const [newStaffName, setNewStaffName]         = useState('')
+  const [newStaffUser, setNewStaffUser]         = useState('')
+  const [newStaffUserErr, setNewStaffUserErr]   = useState<string | null>(null)
+  const [newStaffRole, setNewStaffRole]         = useState('staff')
   const [newStaffPin,  setNewStaffPin]      = useState('')
   const [addingStaff,  setAddingStaff]      = useState(false)
   const [addStaffErr,  setAddStaffErr]      = useState<string | null>(null)
@@ -392,9 +393,19 @@ export function SettingsClient({ profileName, profileEmail, profileRole, service
               className="w-full px-3 py-2 text-sm outline-none" style={INPUT_STYLE}
               placeholder="Full name" />
             <input type="text" value={newStaffUser}
-              onChange={e => setNewStaffUser(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+              onChange={e => {
+                const raw = e.target.value.toLowerCase()
+                const clean = raw.replace(/[^a-z0-9_]/g, '').slice(0, 20)
+                setNewStaffUser(clean)
+                setNewStaffUserErr(raw !== clean ? 'Letters, numbers and _ only (max 20)' : null)
+              }}
               className="w-full px-3 py-2 text-sm outline-none" style={MONO_INPUT}
-              placeholder="username" autoCapitalize="none" />
+              placeholder="e.g. jean_paul, mechanic1" autoCapitalize="none" />
+            {newStaffUserErr && (
+              <p className="text-[10px] mt-1" style={{ color: '#E8412B', fontFamily: 'JetBrains Mono, monospace' }}>
+                {newStaffUserErr}
+              </p>
+            )}
             <select value={newStaffRole} onChange={e => setNewStaffRole(e.target.value)}
               className="w-full px-3 py-2 text-sm outline-none" style={INPUT_STYLE}>
               <option value="staff">Staff</option>

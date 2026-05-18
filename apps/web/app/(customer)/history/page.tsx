@@ -62,7 +62,7 @@ export default async function HistoryPage() {
   const bookings = (bookingsRaw as Booking[] | null) ?? []
   const allValid = (allRaw as { status: string; estimated_cost_mur: number; final_cost_mur: number | null; scheduled_start: string }[] | null) ?? []
 
-  const completed = allValid.filter(b => b.status === 'complete')
+  const completed = allValid.filter(b => b.status === 'completed')
 
   const kpi: KpiData = {
     visits:   allValid.length,

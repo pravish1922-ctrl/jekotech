@@ -137,7 +137,7 @@ export default async function HomePage() {
       .from('bookings')
       .select('id, reference, service_ids, scheduled_start')
       .eq('client_id', user.id)
-      .eq('status', 'complete')
+      .eq('status', 'completed')
       .order('scheduled_start', { ascending: false })
       .limit(3),
   ])

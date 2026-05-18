@@ -59,7 +59,7 @@ function applyFilter(bookings: Booking[], filter: Filter): Booking[] {
         .filter(b => UPCOMING_STATUSES.has(b.status))
         .slice()
         .sort((a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime())
-    case 'COMPLETED': return bookings.filter(b => b.status === 'complete')
+    case 'COMPLETED': return bookings.filter(b => b.status === 'completed')
     case 'CANCELLED': return bookings.filter(b => b.status === 'cancelled')
     default:          return bookings
   }

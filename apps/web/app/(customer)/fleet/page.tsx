@@ -90,7 +90,7 @@ export default async function FleetPage() {
               {vehicles.map(v => {
                 const last      = lastBooking.get(v.id)
                 const lastLabel = last
-                  ? last.status === 'complete'
+                  ? last.status === 'completed'
                     ? `Last serviced: ${smartDate(last.date)}`
                     : `Last booked: ${smartDate(last.date)}`
                   : 'No bookings yet'
