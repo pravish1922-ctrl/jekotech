@@ -57,6 +57,12 @@ for file in $SIGNOUT_FILES; do
   fi
 done
 
+# Check 7: Status values use 'completed' not 'complete'
+if grep -rn "'complete'" apps/web/app apps/web/components 2>/dev/null | \
+   grep -v "'completed'" | grep "status"; then
+  echo "WARN: Possible use of 'complete' instead of 'completed' for status"
+fi
+
 if [ $FAIL -eq 1 ]; then
   echo ""
   echo "POST BUILD QA: FAIL — fix above issues before committing"
