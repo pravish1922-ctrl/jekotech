@@ -24,7 +24,7 @@ function GoogleIcon() {
 }
 
 export default function LoginPage() {
-  const router    = useRouter()
+  const router     = useRouter()
   const [supabase] = useState(() => createBrowserClient())
   const [email, setEmail]             = useState('')
   const [password, setPassword]       = useState('')
@@ -38,20 +38,12 @@ export default function LoginPage() {
     setTimeout(() => setAppleToast(false), 3500)
   }
 
-  async function handleGoogleLogin() {
-    setError(null)
+  // Google login now goes through our own API route, not Supabase directly.
+  // This ensures the Google account picker shows jekotech.vercel.app instead
+  // of the Supabase project URL.
+  function handleGoogleLogin() {
     setGoogleLoading(true)
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-    if (oauthError) {
-      setError(oauthError.message)
-      setGoogleLoading(false)
-    }
-    // No need to setGoogleLoading(false) on success — page will redirect
+    window.location.href = '/api/auth/google'
   }
 
   async function handleSubmit(e: FormEvent) {
