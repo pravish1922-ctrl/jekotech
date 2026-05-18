@@ -14,10 +14,14 @@ function roleHome(role: string | null): string {
 }
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
-
   let destination = '/home'
+
+  // Always redirect to production domain, never Supabase or preview URLs
+  const appUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    'https://jekotech.vercel.app'
 
   if (code) {
     const cookieStore = cookies()
@@ -71,12 +75,10 @@ export async function GET(request: Request) {
             .from('bookings')
             .update({ client_id: user.id })
             .eq('client_id', walkin.id)
-
           await supabaseAdmin
             .from('vehicles')
             .update({ owner_client_id: user.id })
             .eq('owner_client_id', walkin.id)
-
           await supabaseAdmin
             .from('clients')
             .delete()
@@ -107,5 +109,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(`${origin}${destination}`)
+  return NextResponse.redirect(`${appUrl}${destination}`)
 }
