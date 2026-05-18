@@ -32,6 +32,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'PIN must be 4–6 digits' }, { status: 400 })
   }
 
+  const { data: clientRow } = await db
+    .from('clients')
+    .select('username')
+    .eq('id', clientId)
+    .single()
+
   const pinHash = await bcrypt.hash(newPin, 10)
 
   const { error: pinErr } = await db
@@ -41,8 +47,12 @@ export async function POST(request: NextRequest) {
 
   if (pinErr) return NextResponse.json({ error: pinErr.message }, { status: 500 })
 
-  // Update Supabase Auth password — pad to 6 chars to meet Auth minimum
-  const { error: authErr } = await db.auth.admin.updateUserById(clientId, { password: newPin.padEnd(6, '0') })
+  // Update Supabase Auth password + sync email to current username
+  const authUpdate: { password: string; email?: string } = { password: newPin.padEnd(6, '0') }
+  if (clientRow?.username) {
+    authUpdate.email = `${clientRow.username}@staff.jekotech.internal`
+  }
+  const { error: authErr } = await db.auth.admin.updateUserById(clientId, authUpdate)
   if (authErr) return NextResponse.json({ error: authErr.message }, { status: 500 })
 
   return NextResponse.json({ success: true })
