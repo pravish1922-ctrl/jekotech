@@ -3,6 +3,16 @@
 import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 
+function roleHome(role: string | null): string {
+  switch (role) {
+    case 'owner':
+    case 'delegate':
+    case 'staff':    return '/admin/bookings'
+    case 'mechanic': return '/mechanic/jobs'
+    default:         return '/home'
+  }
+}
+
 function JKMark() {
   return (
     <div
@@ -38,7 +48,7 @@ export default function StaffChangePinPage() {
       body:    JSON.stringify({ new_pin: newPin }),
     })
 
-    const json = await res.json() as { success?: boolean; error?: string }
+    const json = await res.json() as { success?: boolean; error?: string; role?: string | null }
 
     if (!res.ok || json.error) {
       setError(json.error ?? 'Failed to update PIN')
@@ -46,8 +56,9 @@ export default function StaffChangePinPage() {
       return
     }
 
-    // Redirect to portal — middleware will send to correct home by role
-    router.push('/admin/bookings')
+    // Redirect to the correct portal based on the user's actual role
+    const destination = roleHome(json.role ?? null)
+    router.push(destination)
   }
 
   const canSubmit = newPin.length >= 4 && confirmPin.length >= 4 && !loading

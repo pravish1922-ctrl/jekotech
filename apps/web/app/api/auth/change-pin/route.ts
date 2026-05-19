@@ -25,10 +25,12 @@ export async function POST(request: NextRequest) {
   const pinHash = await bcrypt.hash(newPin, 10)
   const db = serviceDb()
 
-  const { error: updatePinErr } = await db
-    .from('staff_pins')
-    .update({ pin_hash: pinHash, must_change: false, last_changed_at: new Date().toISOString() })
-    .eq('client_id', user.id)
+  const [{ error: updatePinErr }, { data: clientRow }] = await Promise.all([
+    db.from('staff_pins')
+      .update({ pin_hash: pinHash, must_change: false, last_changed_at: new Date().toISOString() })
+      .eq('client_id', user.id),
+    db.from('clients').select('role').eq('id', user.id).single(),
+  ])
 
   if (updatePinErr) {
     return NextResponse.json({ error: updatePinErr.message }, { status: 500 })
@@ -40,5 +42,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: authUpdateErr.message }, { status: 500 })
   }
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, role: clientRow?.role ?? null })
 }
